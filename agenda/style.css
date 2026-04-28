@@ -446,9 +446,133 @@ html, body {
 
 /* ─── MOBILE ──────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Permite scroll geral na página no mobile */
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+    overflow-x: hidden;
+  }
+
+  #app {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  /* Topbar compacta no mobile */
+  .topbar {
+    padding: 8px 12px;
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .topbar-title {
+    font-size: 8px;
+    letter-spacing: .10em;
+    flex: 1;
+    text-align: center;
+  }
+  .topbar-logo img { height: 20px; }
+  .btn-primary {
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+
+  /* Workspace empilha verticalmente */
   :root { --panel-w: 100vw; }
-  .workspace { flex-direction: column; height: auto; overflow-y: auto; }
-  .panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--gray-200); }
-  .panel-inner { overflow-y: visible; }
-  .preview-area { width: 100%; min-height: 60vh; }
+  .workspace {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Painel ocupa full width e cresce com conteúdo */
+  .panel {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--gray-200);
+    overflow: visible;
+  }
+  .panel-inner {
+    overflow-y: visible;
+    overflow-x: hidden;
+    padding-bottom: 8px;
+  }
+
+  /* Seções com padding um pouco menor */
+  .section { padding: 12px 12px; }
+
+  /* Campos de data + turno empilham no mobile estreito */
+  .section > div[style*="display:flex"] {
+    flex-wrap: wrap;
+  }
+
+  /* Botões de turno maiores para touch */
+  .turno-btn {
+    padding: 10px 4px;
+    min-height: 48px;
+  }
+
+  /* Card profissional no painel */
+  .prof-card { padding: 10px; }
+  .prof-body { gap: 8px; }
+  .prof-foto-col { width: 80px; }
+  .prof-fields { max-width: calc(100% - 90px); }
+
+  /* Zona de foto menor no mobile */
+  .foto-zone { width: 70px !important; height: 70px !important; }
+
+  /* Inputs com fonte maior para evitar zoom automático do iOS */
+  .input {
+    font-size: 16px;
+    padding: 9px 10px;
+  }
+
+  /* Preview fica abaixo do painel, com altura fixa generosa */
+  .preview-area {
+    width: 100%;
+    height: 520px;
+    min-height: 420px;
+    flex-shrink: 0;
+  }
+  .preview-scroll {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Notificação fica na parte inferior centralizada no mobile */
+  #notif {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  /* Botão adicionar profissional — touch friendly */
+  .add-btn {
+    padding: 12px;
+    font-size: 12px;
+    min-height: 44px;
+  }
+
+  /* Zoom row — botões maiores para touch */
+  .btn-sq {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+  .slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+  }
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
 }

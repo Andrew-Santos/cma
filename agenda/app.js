@@ -461,8 +461,22 @@ async function baixarCard() {
     if (!wrapper) throw new Error('Card não encontrado');
 
     const SCALE = 8;
-    const shadowOrig = wrapper.style.boxShadow;
+
+    // Remove temporariamente o transform do card-outer (pai) antes da captura.
+    // O html2canvas usa getBoundingClientRect() para posicionar o elemento —
+    // se o pai tiver transform:scale(), o rect fica deslocado e gera borda branca.
+    const outer = document.querySelector('.card-outer');
+    const outerTransformOrig = outer ? outer.style.transform : '';
+    const outerWidthOrig     = outer ? outer.style.width     : '';
+    const outerHeightOrig    = outer ? outer.style.height    : '';
+    if (outer) {
+      outer.style.transform = 'none';
+      outer.style.width     = '405px';
+      outer.style.height    = '720px';
+    }
     wrapper.style.boxShadow = 'none';
+    wrapper.style.border    = 'none';
+    wrapper.style.outline   = 'none';
 
     const rawCanvas = await window.html2canvas(wrapper, {
       scale: SCALE,
@@ -472,13 +486,12 @@ async function baixarCard() {
       logging: false,
       imageTimeout: 30000,
       onclone: (doc) => {
-        // Injeta a fonte no documento clonado e aguarda antes de capturar
         return new Promise((resolve) => {
           const link = doc.createElement('link');
           link.rel = 'stylesheet';
           link.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap';
           link.onload = resolve;
-          link.onerror = resolve; // continua mesmo se fonte falhar
+          link.onerror = resolve;
           doc.head.appendChild(link);
 
           const cw = doc.getElementById('card-wrapper');
@@ -497,12 +510,26 @@ async function baixarCard() {
             cw.style.fontFamily      = "'Outfit', sans-serif";
           }
           const co = doc.querySelector('.card-outer');
-          if (co) { co.style.transform = 'none'; co.style.filter = 'none'; }
+          if (co) {
+            co.style.transform = 'none';
+            co.style.filter    = 'none';
+            co.style.boxShadow = 'none';
+            co.style.width     = '405px';
+            co.style.height    = '720px';
+          }
         });
       },
     });
 
-    wrapper.style.boxShadow = shadowOrig;
+    // Restaura os estilos do card-outer
+    if (outer) {
+      outer.style.transform = outerTransformOrig;
+      outer.style.width     = outerWidthOrig;
+      outer.style.height    = outerHeightOrig;
+    }
+    wrapper.style.boxShadow = '';
+    wrapper.style.border    = '';
+    wrapper.style.outline   = '';
 
     const final = document.createElement('canvas');
     final.width  = rawCanvas.width;
@@ -513,11 +540,37 @@ async function baixarCard() {
     ctx.drawImage(rawCanvas, 0, 0);
 
     const data = document.getElementById('inp-data')?.value || 'agenda';
-    const a = document.createElement('a');
-    a.download = `agenda-amar-${data}.png`;
-    a.href = final.toDataURL('image/png');
-    a.click();
-    notif('Card baixado com máxima qualidade!', 'sucesso', 3000);
+    const filename = `agenda-amar-${data}.png`;
+
+    // iOS Safari não suporta a.click() com download — usa blob + URL temporária
+    final.toBlob((blob) => {
+      if (!blob) { notif('Erro ao gerar imagem.', 'erro'); return; }
+      const url = URL.createObjectURL(blob);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        // iOS: abre a imagem em nova aba (usuário salva manualmente com "pressionar e segurar")
+        const win = window.open(url, '_blank');
+        if (!win) {
+          // Fallback caso popup seja bloqueado
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        notif('Imagem aberta! Pressione e segure para salvar.', 'sucesso', 5000);
+      } else {
+        const a = document.createElement('a');
+        a.download = filename;
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        notif('Card baixado com máxima qualidade!', 'sucesso', 3000);
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }, 'image/png');
   } catch (e) {
     console.error(e);
     notif('Erro ao exportar.', 'erro');
@@ -529,7 +582,8 @@ function escalarCard() {
   const outer = document.querySelector('.card-outer');
   const area  = document.querySelector('.preview-area');
   if (!outer || !area) return;
-  const pad    = 40;
+  const isMobile = window.innerWidth <= 768;
+  const pad    = isMobile ? 24 : 40;
   const scaleH = (area.clientHeight - pad) / 720;
   const scaleW = (area.clientWidth  - pad) / 405;
   const scale  = Math.min(scaleH, scaleW, 1);
