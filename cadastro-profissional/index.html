@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profissionais · Centro Médico AMAR</title>
+  <link rel="shortcut icon" href="icon.svg" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:        #1B8A8A;
+      --teal-dark:   #0D5C5C;
+      --teal-light:  #EAF5F5;
+      --teal-mid:    #B8DEDE;
+      --teal-xlight: #F2FAFA;
+      --red:         #D93545;
+      --red-light:   #FCEAEC;
+      --white:       #FFFFFF;
+      --gray-50:     #F9FAFB;
+      --gray-100:    #F3F4F6;
+      --gray-200:    #E5E7EB;
+      --gray-300:    #D1D5DB;
+      --gray-400:    #9CA3AF;
+      --gray-500:    #6B7280;
+      --gray-700:    #374151;
+      --gray-900:    #111827;
+      --bg:          #F0F2F4;
+      --tr:          0.16s ease;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--gray-900);
+      font-size: 13px;
+    }
+
+    /* ─────────────── HEADER ─────────────────────────────────── */
+    .hdr {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      height: 50px; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .hdr-left  { display: flex; align-items: center; gap: 10px; }
+    .hdr-logo  img { height: 26px; }
+    .hdr-sep   { width: 1px; height: 20px; background: var(--gray-200); }
+    .hdr-label {
+      font-size: 11px; font-weight: 600; color: var(--gray-500);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .hdr-label img { opacity: .55; }
+    .hdr-right { display: flex; align-items: center; gap: 10px; }
+    .hdr-count { font-size: 11px; color: var(--gray-400); }
+    .hdr-count b { color: var(--teal); font-weight: 700; }
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 15px; border-radius: 7px;
+      background: var(--teal); color: var(--white);
+      border: none; font-size: 11px; font-weight: 700;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+      box-shadow: 0 2px 6px rgba(27,138,138,.28);
+      transition: all var(--tr);
+    }
+    .btn-add:hover { background: var(--teal-dark); }
+
+    /* ─────────────── MAIN ───────────────────────────────────── */
+    .main { max-width: 1080px; margin: 0 auto; padding: 24px 18px 60px; }
+
+    /* ─────────────── PAGE TITLE ─────────────────────────────── */
+    .page-top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+    .eyebrow {
+      font-size: 8.5px; font-weight: 700; letter-spacing: .22em;
+      text-transform: uppercase; color: var(--teal); margin-bottom: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .eyebrow::before { content: ''; width: 12px; height: 2px; background: var(--teal); border-radius: 2px; }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 600; color: var(--gray-900); letter-spacing: -.4px;
+    }
+    .page-title em { font-style: italic; color: var(--teal); }
+
+    /* ─────────────── TOOLBAR ────────────────────────────────── */
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .search-wrap { position: relative; flex: 1; max-width: 260px; }
+    .search-wrap svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none; }
+    .search-inp {
+      width: 100%; padding: 7px 9px 7px 30px;
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 7px; font-size: 12px; font-family: 'Outfit', sans-serif;
+      color: var(--gray-900); outline: none;
+      transition: border-color var(--tr), box-shadow var(--tr);
+    }
+    .search-inp:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(27,138,138,.1); }
+    .search-inp::placeholder { color: var(--gray-300); }
+    .tb-info { font-size: 11px; color: var(--gray-400); margin-left: auto; }
+
+    /* ─────────────── LISTA ──────────────────────────────────── */
+    .prof-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .prof-item {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 10px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px;
+      transition: all var(--tr);
+      animation: fadeUp .22s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .prof-item:hover { border-color: var(--teal-mid); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+
+    .prof-num { font-size: 10px; color: var(--gray-300); font-weight: 700; min-width: 20px; text-align: right; flex-shrink: 0; }
+
+    .prof-av {
+      width: 80px; height: 80px; border-radius: 50%;
+      border: 2px solid var(--teal-mid); background: var(--teal-xlight);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .prof-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .prof-av-letter {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--teal);
+    }
+
+    .prof-info { flex: 1; min-width: 0; }
+    .prof-nome { font-weight: 700; color: var(--gray-900); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
+    .prof-esp  { font-size: 10px; font-weight: 600; color: var(--teal); letter-spacing: .07em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .prof-acts { display: flex; gap: 4px; flex-shrink: 0; }
+    .btn-ic {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--gray-200); cursor: pointer;
+      background: transparent; transition: all var(--tr); color: var(--gray-400);
+    }
+    .btn-ic.ed:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-xlight); }
+    .btn-ic.dl:hover { border-color: var(--red);  color: var(--red);  background: var(--red-light); }
+
+    /* ─────────────── EMPTY / ERROR / SKELETON ───────────────── */
+    .empty {
+      background: var(--white); border: 1.5px dashed var(--gray-200);
+      border-radius: 10px; padding: 36px 20px; text-align: center;
+    }
+    .empty-ic {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--teal-xlight); border: 1px solid var(--teal-mid);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; color: var(--teal);
+    }
+    .empty h3 { font-size: 13px; font-weight: 600; color: var(--gray-500); margin-bottom: 3px; }
+    .empty p  { font-size: 11px; color: var(--gray-400); }
+
+    .skel-item {
+      background: var(--white); border: 1.5px solid var(--gray-100);
+      border-radius: 10px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .skel-av { width: 44px; height: 44px; border-radius: 50%; background: var(--gray-100); flex-shrink: 0; }
+    .skel-lines { flex: 1; }
+    .skel-ln {
+      height: 9px; border-radius: 5px; margin-bottom: 6px;
+      background: linear-gradient(90deg, #F3F4F6 0%, #E5E7EB 50%, #F3F4F6 100%);
+      background-size: 200% 100%; animation: sh 1.4s infinite;
+    }
+    .skel-ln.s { width: 52%; margin-bottom: 0; }
+    @keyframes sh { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+    .err-msg {
+      background: var(--red-light); border: 1px solid rgba(217,53,69,.2);
+      border-radius: 8px; padding: 11px 14px; font-size: 12px; color: var(--red);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .err-msg a { color: var(--red); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+    /* ─────────────── MODAL BASE ─────────────────────────────── */
+    .mbk {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.35); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 14px;
+    }
+    .mbk.open { display: flex; }
+
+    .modal {
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 14px; width: 100%; max-width: 540px;
+      max-height: 93vh; overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,.16);
+      animation: mIn .18s ease both;
+    }
+    @keyframes mIn { from { opacity:0; transform:scale(.96) translateY(7px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .modal::-webkit-scrollbar { width: 3px; }
+    .modal::-webkit-scrollbar-thumb { background: var(--teal-mid); border-radius: 2px; }
+
+    .mhdr {
+      padding: 16px 20px 14px; border-bottom: 1px solid var(--gray-100);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mhdr-sub { font-size: 8px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--teal); margin-bottom: 2px; }
+    .mhdr-ttl { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+    .mclose {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--gray-100); border: 1px solid var(--gray-200);
+      color: var(--gray-500); cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--tr); flex-shrink: 0;
+    }
+    .mclose:hover { background: var(--gray-200); color: var(--gray-700); }
+
+    .mbody { padding: 16px 20px 20px; }
+
+    /* ─────────────── FORM ───────────────────────────────────── */
+    .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 14px; }
+    .flabel {
+      display: block; font-size: 9.5px; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gray-500); margin-bottom: 4px;
+    }
+    .finput {
+      width: 100%; padding: 8px 11px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 7px; color: var(--gray-900);
+      font-size: 13px; font-family: 'Outfit', sans-serif; outline: none;
+      transition: border-color var(--tr), box-shadow var(--tr);
+    }
+    .finput:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(27,138,138,.1); background: var(--white); }
+    .finput::placeholder { color: var(--gray-300); }
+
+    /* ─────────────── FOTO EDITOR ────────────────────────────── */
+    .fsec {
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 9px; padding: 12px; margin-bottom: 14px;
+    }
+    .fsec-ttl {
+      font-size: 9px; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--gray-400); margin-bottom: 11px;
+    }
+    .flayout { display: flex; gap: 14px; align-items: center; }
+
+    .circle-wrap { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .circle {
+      width: 88px; height: 88px; border-radius: 50%;
+      border: none; background: var(--teal-xlight);
+      overflow: hidden; position: relative;
+    }
+    .circle canvas { position: absolute; inset: 0; width: 88px !important; height: 88px !important; }
+    .circle-ph {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px; color: var(--teal-mid);
+    }
+    .circle-ph span { font-size: 8px; color: var(--gray-300); }
+    .circle-lbl { font-size: 9px; color: var(--gray-400); }
+
+    .fcontrols { flex: 1; min-width: 0; }
+    .dropzone {
+      border: 1.5px dashed var(--gray-300); border-radius: 7px;
+      padding: 12px; text-align: center; cursor: pointer;
+      transition: all var(--tr); background: var(--white); margin-bottom: 9px;
+    }
+    .dropzone:hover, .dropzone.dov { border-color: var(--teal); background: var(--teal-xlight); }
+    .dropzone input { display: none; }
+    .dz-icon { color: var(--teal-mid); margin-bottom: 4px; }
+    .dz-text { font-size: 11px; color: var(--gray-400); line-height: 1.45; }
+    .dz-text strong { color: var(--gray-600); font-weight: 600; }
+
+    .sliders { display: flex; flex-direction: column; gap: 7px; }
+    .sl-r { display: flex; align-items: center; gap: 7px; }
+    .sl-lbl { font-size: 9px; color: var(--gray-400); width: 38px; flex-shrink: 0; letter-spacing: .05em; text-transform: uppercase; }
+    .sl-r input[type="range"] {
+      flex: 1; accent-color: var(--teal); cursor: pointer; height: 14px;
+      -webkit-appearance: none; background: transparent;
+    }
+    .sl-r input[type="range"]::-webkit-slider-runnable-track { height: 3px; background: var(--gray-200); border-radius: 3px; }
+    .sl-r input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+      background: var(--teal); margin-top: -4.5px;
+      box-shadow: 0 1px 3px rgba(27,138,138,.4);
+    }
+    .sl-r input[type="range"]::-moz-range-track { height: 3px; background: var(--gray-200); border-radius: 3px; }
+    .sl-r input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--teal); border: none; }
+    .sl-val { font-size: 9px; color: var(--gray-400); width: 28px; text-align: right; }
+
+    .foto-btns { display: flex; gap: 5px; margin-top: 7px; }
+    .bsm {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 9px; border-radius: 5px; font-size: 10px; font-weight: 600;
+      font-family: 'Outfit', sans-serif; cursor: pointer; transition: all var(--tr);
+    }
+    .bsm.t { background: var(--teal-xlight); border: 1px solid var(--teal-mid); color: var(--teal); }
+    .bsm.t:hover { background: var(--teal-light); }
+    .bsm.g { background: transparent; border: 1px solid var(--gray-200); color: var(--gray-500); }
+    .bsm.g:hover { background: var(--gray-100); color: var(--gray-700); }
+
+    /* ─────────────── FORM ACTIONS ───────────────────────────── */
+    .facts { display: flex; gap: 7px; justify-content: flex-end; margin-top: 4px; }
+    .btn-cancel {
+      padding: 7px 16px; border-radius: 7px; background: transparent;
+      border: 1.5px solid var(--gray-200); color: var(--gray-500);
+      font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;
+      cursor: pointer; transition: all var(--tr);
+    }
+    .btn-cancel:hover { border-color: var(--gray-300); color: var(--gray-700); }
+    .btn-save {
+      padding: 7px 18px; border-radius: 7px;
+      background: var(--teal); border: none; color: var(--white);
+      font-size: 12px; font-weight: 700; font-family: 'Outfit', sans-serif;
+      cursor: pointer; transition: all var(--tr);
+      box-shadow: 0 2px 6px rgba(27,138,138,.28);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .btn-save:hover { background: var(--teal-dark); }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+    .spinner { width: 11px; height: 11px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; display: none; }
+    .btn-save.ld .spinner { display: block; }
+    .btn-save.ld .btxt { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─────────────── MODAL SENHA ────────────────────────────── */
+    .pmodal { max-width: 360px; }
+
+    .wbox {
+      display: flex; align-items: flex-start; gap: 10px;
+      border-radius: 7px; padding: 10px 12px; margin-bottom: 12px;
+    }
+    .wbox.red  { background: var(--red-light);   border: 1px solid rgba(217,53,69,.18); }
+    .wbox.teal { background: var(--teal-xlight); border: 1px solid rgba(27,138,138,.18); }
+    .wbox-ic { flex-shrink: 0; margin-top: 1px; }
+    .wbox-ic.r { color: var(--red);  }
+    .wbox-ic.t { color: var(--teal); }
+    .wbox-name { font-weight: 700; color: var(--gray-900); font-size: 12px; margin-bottom: 2px; }
+    .wbox-txt  { font-size: 11px; color: var(--gray-500); line-height: 1.4; }
+
+    .pfield { margin-bottom: 12px; }
+    .pfield label {
+      display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--gray-500); margin-bottom: 5px;
+    }
+    .pfield input {
+      width: 100%; padding: 9px 12px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 7px; color: var(--gray-900);
+      font-size: 18px; font-family: 'Outfit', sans-serif; letter-spacing: .45em;
+      outline: none; text-align: center;
+      transition: border-color var(--tr), box-shadow var(--tr);
+    }
+    .pfield input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(27,138,138,.1); }
+    .perr { color: var(--red); font-size: 11px; margin-top: 4px; display: none; animation: shk .3s ease; }
+    @keyframes shk { 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-4px) } 75%{ transform:translateX(4px) } }
+
+    .pacts { display: flex; gap: 7px; justify-content: flex-end; }
+    .btn-del {
+      padding: 7px 16px; border-radius: 7px; background: var(--red);
+      border: none; color: var(--white); font-size: 11px; font-weight: 700;
+      font-family: 'Outfit', sans-serif; cursor: pointer; transition: all var(--tr);
+    }
+    .btn-del:hover { background: #b52a38; }
+    .btn-del:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-edit-ok {
+      padding: 7px 16px; border-radius: 7px; background: var(--teal);
+      border: none; color: var(--white); font-size: 11px; font-weight: 700;
+      font-family: 'Outfit', sans-serif; cursor: pointer; transition: all var(--tr);
+    }
+    .btn-edit-ok:hover { background: var(--teal-dark); }
+
+    /* ─────────────── TOAST ──────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 18px; right: 18px; z-index: 999;
+      padding: 9px 14px; border-radius: 7px;
+      font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;
+      background: var(--teal-dark); color: var(--white);
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+      transform: translateY(14px); opacity: 0;
+      transition: all .2s ease; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.err  { background: var(--red); }
+
+    @media (max-width: 560px) {
+      .hdr { padding: 0 14px; }
+      .main { padding: 16px 12px 50px; }
+      .frow { grid-template-columns: 1fr; }
+      .flayout { flex-direction: column; }
+      .circle { width: 76px; height: 76px; }
+      .circle canvas { width: 76px !important; height: 76px !important; }
+      .mhdr, .mbody { padding-left: 14px; padding-right: 14px;} 
+    .prof-av { width: 50px; height: 50px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">
+      <a href="https://www.instagram.com/teamcriativamkt/"><img src="logo-criativa.svg" alt="Criativa MKT"></a>
+    </div>
+    <div class="hdr-sep"></div>
+    <span class="hdr-label">
+      Centro Médico Amar
+    </span>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-count">Total: <b id="cnt">—</b></span>
+    <button class="btn-add" onclick="abrirAdd()">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Cadastrar
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-top">
+    <div>
+      <div class="eyebrow">Cadastro</div>
+      <h1 class="page-title">Equipe <em>médica</em></h1>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-inp" id="inp-search" placeholder="Buscar..." oninput="filtrar()">
+    </div>
+    <span class="tb-info" id="tb-info"></span>
+  </div>
+
+  <div id="lista">
+    <div class="prof-list">
+      <div class="skel-item"><div class="skel-av"></div><div class="skel-lines"><div class="skel-ln"></div><div class="skel-ln s"></div></div></div>
+      <div class="skel-item"><div class="skel-av"></div><div class="skel-lines"><div class="skel-ln"></div><div class="skel-ln s"></div></div></div>
+      <div class="skel-item"><div class="skel-av"></div><div class="skel-lines"><div class="skel-ln"></div><div class="skel-ln s"></div></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- ─── MODAL FORM (add/edit) ─── -->
+<div class="mbk" id="m-form">
+  <div class="modal">
+    <div class="mhdr">
+      <div>
+        <div class="mhdr-sub" id="m-eyebrow">Novo registro</div>
+        <div class="mhdr-ttl" id="m-title">Cadastrar Profissional</div>
+      </div>
+      <button class="mclose" onclick="fecharForm()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="frow">
+        <div>
+          <label class="flabel" for="inp-nome">Nome completo</label>
+          <input type="text" id="inp-nome" class="finput" placeholder="Dr. Nome Sobrenome">
+        </div>
+        <div>
+          <label class="flabel" for="inp-esp">Especialidade</label>
+          <input type="text" id="inp-esp" class="finput" placeholder="Ex: Clínica Médica">
+        </div>
+      </div>
+
+      <!-- Editor foto -->
+      <div class="fsec">
+        <div class="fsec-ttl">Foto do Profissional</div>
+        <div class="flayout">
+          <div class="circle-wrap">
+            <div class="circle" id="circle">
+              <div class="circle-ph" id="circle-ph">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Prévia</span>
+              </div>
+              <canvas id="fcanvas" width="264" height="264" style="display:none;"></canvas>
+            </div>
+            <span class="circle-lbl">Circulada</span>
+          </div>
+          <div class="fcontrols">
+            <div class="dropzone" id="dz" onclick="document.getElementById('finput').click()">
+              <input type="file" id="finput" accept="image/*" onchange="onFoto(event)">
+              <div class="dz-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <div class="dz-text"><strong>Selecionar foto</strong><br><span style="font-size:10px;color:#bbb;">ou arraste · JPG PNG até 10MB</span></div>
+            </div>
+            <div class="sliders" id="sliders" style="display:none;">
+              <div class="sl-r">
+                <span class="sl-lbl">Zoom</span>
+                <input type="range" id="sl-z" min="100" max="400" step="1" value="100" oninput="draw()">
+                <span class="sl-val" id="vz">100%</span>
+              </div>
+              <div class="sl-r">
+                <span class="sl-lbl">Eixo X</span>
+                <input type="range" id="sl-x" min="-200" max="200" step="1" value="0" oninput="draw()">
+                <span class="sl-val" id="vx">0</span>
+              </div>
+              <div class="sl-r">
+                <span class="sl-lbl">Eixo Y</span>
+                <input type="range" id="sl-y" min="-200" max="200" step="1" value="0" oninput="draw()">
+                <span class="sl-val" id="vy">0</span>
+              </div>
+              <div class="foto-btns">
+                <button class="bsm t" onclick="document.getElementById('finput').click()">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Trocar
+                </button>
+                <button class="bsm g" onclick="resetFoto()">Resetar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="facts">
+        <button class="btn-cancel" onclick="fecharForm()">Cancelar</button>
+        <button class="btn-save" id="btn-save" onclick="salvar()">
+          <div class="spinner"></div>
+          <span class="btxt" id="btxt">Salvar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL SENHA EDITAR ─── -->
+<div class="mbk" id="m-pass-edit">
+  <div class="modal pmodal">
+    <div class="mhdr">
+      <div>
+        <div class="mhdr-sub">Segurança</div>
+        <div class="mhdr-ttl">Confirmar edição</div>
+      </div>
+      <button class="mclose" onclick="fecharPassEdit()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="wbox teal">
+        <div class="wbox-ic t">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div>
+          <div class="wbox-name" id="edit-preview">—</div>
+          <div class="wbox-txt">Digite a senha para liberar a edição.</div>
+        </div>
+      </div>
+      <div class="pfield">
+        <label>Senha</label>
+        <input type="password" id="inp-pe" placeholder="••••" maxlength="4" oninput="document.getElementById('err-pe').style.display='none'">
+        <div class="perr" id="err-pe">Senha incorreta.</div>
+      </div>
+      <div class="pacts">
+        <button class="btn-cancel" onclick="fecharPassEdit()">Cancelar</button>
+        <button class="btn-edit-ok" id="btn-ok-edit" onclick="confirmarEdit()">Continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL SENHA EXCLUIR ─── -->
+<div class="mbk" id="m-pass-del">
+  <div class="modal pmodal">
+    <div class="mhdr">
+      <div>
+        <div class="mhdr-sub">Segurança</div>
+        <div class="mhdr-ttl">Excluir profissional</div>
+      </div>
+      <button class="mclose" onclick="fecharPassDel()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="wbox red">
+        <div class="wbox-ic r">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <div class="wbox-name" id="del-preview">—</div>
+          <div class="wbox-txt">Ação permanente e irreversível.</div>
+        </div>
+      </div>
+      <div class="pfield">
+        <label>Senha</label>
+        <input type="password" id="inp-pd" placeholder="••••" maxlength="4" oninput="document.getElementById('err-pd').style.display='none'">
+        <div class="perr" id="err-pd">Senha incorreta.</div>
+      </div>
+      <div class="pacts">
+        <button class="btn-cancel" onclick="fecharPassDel()">Cancelar</button>
+        <button class="btn-del" id="btn-del" onclick="confirmarDel()">Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────
+const API      = 'https://cma-cadastro-profissional.andrewmssantos.workers.dev'; // ← altere para a URL do seu Worker
+const R2       = 'https://files-cma.teamcriativa.com';
+const PASS     = '0321';
+
+// ── ESTADO ──────────────────────────────────────────────────────────
+let profs       = [];
+let imgOri      = null;   // Image() original
+let imgDataUrl  = null;   // resultado do canvas
+let editTarget  = null;   // prof em edição
+let delTarget   = null;   // prof para excluir
+let isEdit      = false;
+
+// ── BOOT ────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', load);
+
+// ── TOAST ────────────────────────────────────────────────────────────
+function showToast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (tipo === 'err' ? ' err' : '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ── DRAG-AND-DROP ────────────────────────────────────────────────────
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dov'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dov'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dov');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) handleFile(f);
+});
+
+// ── LOAD ─────────────────────────────────────────────────────────────
+async function load() {
+  try {
+    const r = await fetch(`${API}/profissionais`);
+    if (!r.ok) throw new Error();
+    profs = await r.json();
+    render();
+  } catch {
+    document.getElementById('lista').innerHTML =
+      `<div class="err-msg">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Erro ao carregar. <a onclick="load()">Tentar novamente</a>
+      </div>`;
+  }
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────
+function render(q = '') {
+  document.getElementById('cnt').textContent = profs.length;
+
+  const fil = q
+    ? profs.filter(p => (p.nome+''+p.especialidade).toLowerCase().includes(q))
+    : profs;
+
+  document.getElementById('tb-info').textContent = q
+    ? `${fil.length} de ${profs.length}`
+    : `${profs.length} profissiona${profs.length !== 1 ? 'is' : 'l'}`;
+
+  if (fil.length === 0) {
+    document.getElementById('lista').innerHTML = `
+      <div class="empty">
+        <div class="empty-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h3>${q ? 'Sem resultados' : 'Nenhum profissional'}</h3>
+        <p>${q ? 'Tente outro termo.' : 'Clique em "Cadastrar" para adicionar.'}</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('lista').innerHTML =
+    `<div class="prof-list">${fil.map((p, i) => {
+      const ini = (p.nome||'?').replace(/^(Dr\.|Dra\.|Prof\.)\s*/i,'').charAt(0).toUpperCase();
+      const av  = p.url_imagem
+        ? `<img src="${p.url_imagem}" alt="" loading="lazy" onerror="this.outerHTML='<div class=\\'prof-av-letter\\'>${ini}</div>'">`
+        : `<div class="prof-av-letter">${ini}</div>`;
+      return `
+        <div class="prof-item" style="animation-delay:${i*.028}s">
+          <span class="prof-num">${i+1}</span>
+          <div class="prof-av">${av}</div>
+          <div class="prof-info">
+            <div class="prof-nome">${esc(p.nome)||'Sem nome'}</div>
+            <div class="prof-esp">${esc(p.especialidade)||'—'}</div>
+          </div>
+          <div class="prof-acts">
+            <button class="btn-ic ed" title="Editar" onclick="abrirPassEdit('${p.id}','${esc(p.nome)}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <button class="btn-ic dl" title="Excluir" onclick="abrirPassDel('${p.id}','${esc(p.nome)}','${p.url_imagem||''}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>`;
+    }).join('')}</div>`;
+}
+
+function filtrar() {
+  const q = document.getElementById('inp-search').value.trim().toLowerCase();
+  render(q);
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── MODAL FORM ────────────────────────────────────────────────────────
+function abrirAdd() {
+  isEdit = false; editTarget = null;
+  document.getElementById('m-eyebrow').textContent = 'Novo registro';
+  document.getElementById('m-title').textContent   = 'Cadastrar Profissional';
+  document.getElementById('btxt').textContent      = 'Salvar';
+  document.getElementById('inp-nome').value = '';
+  document.getElementById('inp-esp').value  = '';
+  resetFoto();
+  document.getElementById('m-form').classList.add('open');
+  setTimeout(() => document.getElementById('inp-nome').focus(), 80);
+}
+
+function abrirEdit(id) {
+  const p = profs.find(x => x.id === id);
+  if (!p) return;
+  isEdit = true; editTarget = p;
+  document.getElementById('m-eyebrow').textContent = 'Editando';
+  document.getElementById('m-title').textContent   = 'Editar Profissional';
+  document.getElementById('btxt').textContent      = 'Salvar alteracoes';
+  document.getElementById('inp-nome').value = p.nome || '';
+  document.getElementById('inp-esp').value  = p.especialidade || '';
+  resetFoto();
+
+  // Mostra previa estatica sem crossOrigin (evita erro de CORS)
+  if (p.url_imagem) {
+    const cv = document.getElementById('fcanvas');
+    const S = 264;
+    cv.width = S; cv.height = S;
+    const ctx = cv.getContext('2d');
+    const previewImg = new Image();
+    previewImg.onload = () => {
+      ctx.clearRect(0,0,S,S);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      const mn = Math.min(previewImg.naturalWidth, previewImg.naturalHeight);
+      const sc = S / mn;
+      const dw = previewImg.naturalWidth * sc;
+      const dh = previewImg.naturalHeight * sc;
+      ctx.drawImage(previewImg, (S-dw)/2, (S-dh)/2, dw, dh);
+      cv.style.display = 'block';
+      document.getElementById('circle-ph').style.display = 'none';
+      // imgOri/imgDataUrl ficam null: foto atual e mantida no backend
+    };
+    previewImg.src = p.url_imagem;
+  }
+
+  document.getElementById('m-form').classList.add('open');
+  setTimeout(() => document.getElementById('inp-nome').focus(), 80);
+}
+
+function fecharForm() { document.getElementById('m-form').classList.remove('open'); }
+
+// ── SENHA EDITAR ──────────────────────────────────────────────────────
+function abrirPassEdit(id, nome) {
+  document.getElementById('edit-preview').textContent = nome;
+  document.getElementById('inp-pe').value = '';
+  document.getElementById('err-pe').style.display = 'none';
+  document.getElementById('btn-ok-edit').dataset.id = id;
+  document.getElementById('m-pass-edit').classList.add('open');
+  setTimeout(() => document.getElementById('inp-pe').focus(), 80);
+}
+function fecharPassEdit() { document.getElementById('m-pass-edit').classList.remove('open'); }
+function confirmarEdit() {
+  if (document.getElementById('inp-pe').value !== PASS) {
+    document.getElementById('err-pe').style.display = 'block';
+    document.getElementById('inp-pe').value = '';
+    return;
+  }
+  const id = document.getElementById('btn-ok-edit').dataset.id;
+  fecharPassEdit();
+  abrirEdit(id);
+}
+
+// ── SENHA EXCLUIR ─────────────────────────────────────────────────────
+function abrirPassDel(id, nome, url) {
+  delTarget = { id, url };
+  document.getElementById('del-preview').textContent = nome;
+  document.getElementById('inp-pd').value = '';
+  document.getElementById('err-pd').style.display = 'none';
+  document.getElementById('m-pass-del').classList.add('open');
+  setTimeout(() => document.getElementById('inp-pd').focus(), 80);
+}
+function fecharPassDel() { document.getElementById('m-pass-del').classList.remove('open'); delTarget = null; }
+
+async function confirmarDel() {
+  if (document.getElementById('inp-pd').value !== PASS) {
+    document.getElementById('err-pd').style.display = 'block';
+    document.getElementById('inp-pd').value = '';
+    return;
+  }
+  const btn = document.getElementById('btn-del');
+  btn.disabled = true; btn.textContent = 'Excluindo...';
+  try {
+    const r = await fetch(`${API}/profissionais/${delTarget.id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error();
+    profs = profs.filter(p => p.id !== delTarget.id);
+    render(document.getElementById('inp-search').value.trim().toLowerCase());
+    fecharPassDel();
+    showToast('Profissional excluído.');
+  } catch {
+    showToast('Erro ao excluir.', 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Excluir';
+  }
+}
+
+// ── FOTO ──────────────────────────────────────────────────────────────
+function onFoto(e) { const f = e.target.files[0]; if (f) handleFile(f); }
+
+function handleFile(file) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      imgOri = img;
+      document.getElementById('sliders').style.display = 'flex';
+      const slZ = document.getElementById('sl-z');
+      const slX = document.getElementById('sl-x');
+      const slY = document.getElementById('sl-y');
+      slZ.value = 100;
+      slX.value = 0; slX.min = -200; slX.max = 200;
+      slY.value = 0; slY.min = -200; slY.max = 200;
+      draw();
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function draw() {
+  if (!imgOri) return;
+  const S = 264;
+  const cv = document.getElementById('fcanvas');
+  cv.width = S; cv.height = S;
+  const zoom = parseFloat(document.getElementById('sl-z').value) / 100;
+  const slX = document.getElementById('sl-x');
+  const slY = document.getElementById('sl-y');
+
+  // Calcula dimensoes da imagem com zoom atual
+  const mn = Math.min(imgOri.naturalWidth, imgOri.naturalHeight);
+  const sc = (S / mn) * zoom;
+  const dw = imgOri.naturalWidth  * sc;
+  const dh = imgOri.naturalHeight * sc;
+
+  // Limites de deslocamento: impede imagem de sair da area circular
+  const maxOx = Math.max(0, (dw - S) / 2 / zoom);
+  const maxOy = Math.max(0, (dh - S) / 2 / zoom);
+  slX.min = -Math.round(maxOx); slX.max = Math.round(maxOx);
+  slY.min = -Math.round(maxOy); slY.max = Math.round(maxOy);
+
+  // Clamp valores atuais dentro dos novos limites
+  let ox = Math.max(-maxOx, Math.min(maxOx, parseFloat(slX.value)));
+  let oy = Math.max(-maxOy, Math.min(maxOy, parseFloat(slY.value)));
+  slX.value = Math.round(ox);
+  slY.value = Math.round(oy);
+
+  document.getElementById('vz').textContent = Math.round(zoom*100)+'%';
+  document.getElementById('vx').textContent = Math.round(ox);
+  document.getElementById('vy').textContent = Math.round(oy);
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,S,S);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  const dx = (S - dw) / 2 + ox * zoom;
+  const dy = (S - dh) / 2 + oy * zoom;
+  ctx.drawImage(imgOri, dx, dy, dw, dh);
+  cv.style.display = 'block';
+  document.getElementById('circle-ph').style.display = 'none';
+  imgDataUrl = cv.toDataURL('image/jpeg', 0.95);
+}
+
+function resetFoto() {
+  imgOri = null; imgDataUrl = null;
+  document.getElementById('finput').value = '';
+  document.getElementById('fcanvas').style.display = 'none';
+  document.getElementById('circle-ph').style.display = 'flex';
+  document.getElementById('sliders').style.display = 'none';
+  const slZ = document.getElementById('sl-z');
+  const slX = document.getElementById('sl-x');
+  const slY = document.getElementById('sl-y');
+  slZ.value = 100;
+  slX.value = 0; slX.min = -200; slX.max = 200;
+  slY.value = 0; slY.min = -200; slY.max = 200;
+}
+
+// ── SALVAR ───────────────────────────────────────────────────────────
+async function salvar() {
+  const nome = document.getElementById('inp-nome').value.trim();
+  const esp  = document.getElementById('inp-esp').value.trim();
+  if (!nome) { showToast('Preencha o nome.', 'err'); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.classList.add('ld'); btn.disabled = true;
+
+  try {
+    // 1. Upload imagem (se nova)
+    let urlImg = isEdit ? (editTarget?.url_imagem || null) : null;
+    if (imgDataUrl) {
+      const blob  = dataUrlToBlob(imgDataUrl);
+      const fname = `prof_${Date.now()}.jpg`;
+      const up = await fetch(`${API}/upload/${fname}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'image/jpeg' },
+        body: blob,
+      });
+      if (!up.ok) throw new Error('Erro no upload da imagem.');
+      const upj = await up.json();
+      // usa o domínio público do R2
+      urlImg = upj.url || `${R2}/${fname}`;
+    }
+
+    // 2. Criar ou atualizar
+    if (isEdit && editTarget) {
+      // Worker nao tem PUT: faz DELETE do antigo + POST com dados novos
+      const delR = await fetch(`${API}/profissionais/${editTarget.id}`, { method: 'DELETE' });
+      if (!delR.ok) throw new Error('Erro ao remover registro antigo.');
+      const postR = await fetch(`${API}/profissionais`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, especialidade: esp, url_imagem: urlImg }),
+      });
+      if (!postR.ok) throw new Error('Erro ao salvar alteracoes.');
+      const upd = await postR.json();
+      const idx = profs.findIndex(x => x.id === editTarget.id);
+      if (idx > -1) profs[idx] = upd; else profs.unshift(upd);
+      showToast('Profissional atualizado!');
+    } else {
+      const r = await fetch(`${API}/profissionais`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, especialidade: esp, url_imagem: urlImg }),
+      });
+      if (!r.ok) throw new Error('Erro ao salvar.');
+      const novo = await r.json();
+      profs.unshift(novo);
+      showToast('Profissional cadastrado!');
+    }
+
+    render(document.getElementById('inp-search').value.trim().toLowerCase());
+    fecharForm();
+  } catch (e) {
+    showToast(e.message || 'Erro ao salvar.', 'err');
+  } finally {
+    btn.classList.remove('ld'); btn.disabled = false;
+  }
+}
+
+function dataUrlToBlob(d) {
+  const [h, b] = d.split(',');
+  const mime = h.match(/:(.*?);/)[1];
+  const bin  = atob(b);
+  const arr  = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// ── ESC / fora ───────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fecharForm(); fecharPassEdit(); fecharPassDel(); }
+});
+['m-form','m-pass-edit','m-pass-del'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) { fecharForm(); fecharPassEdit(); fecharPassDel(); }
+  });
+});
+</script>
+</body>
+</html>
