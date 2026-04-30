@@ -168,17 +168,16 @@ html, body {
 }
 
 .card-outer {
-  --card-scale: 1;
-  width:  calc(405px * var(--card-scale));
-  height: calc(720px * var(--card-scale));
+  width: 405px;
+  height: 720px;
   flex-shrink: 0;
   box-shadow:
     0 32px 80px rgba(0,0,0,.75),
     0 8px 24px rgba(0,0,0,.5),
     0 0 0 1px rgba(27,138,138,.15);
-  border-radius: calc(20px * var(--card-scale));
+  border-radius: 20px;
   overflow: hidden;
-  zoom: var(--card-scale);
+  /* escala via transform: scale em escalarCard() */
 }
 
 /* ═══════════════════════════════════════════════════════
