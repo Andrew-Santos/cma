@@ -1104,7 +1104,7 @@ function gerarCardHtml(useBase64 = false) {
     <div class="card-footer">
 
 
-      <img src="../logo-amar.png" style="width:18%;height:auto;" alt="Centro Médico AMAR"
+      <img src="./logo-amar.png" style="width:18%;height:auto;" alt="Centro Médico AMAR"
 
 
            onerror="this.style.display='none';">
