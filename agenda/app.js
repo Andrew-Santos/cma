@@ -272,13 +272,45 @@ function gerarCardHtml(useBase64 = false) {
     ? `${dataFmt.diaSemana}, ${dataFmt.dia} de ${dataFmt.mes} de ${dataFmt.ano}`
     : 'Selecione uma data';
 
-  const BODY_H       = 540;
-  const spacePerItem = n > 0 ? BODY_H / n : BODY_H;
-  const avatarSize   = Math.min(96,  Math.max(26, Math.round(spacePerItem * (n >= 6 ? 0.62 : 0.48))));
-  const nomeSize     = Math.min(20,  Math.max(7,  Math.round(avatarSize   * (n >= 6 ? 0.240 : 0.185))));
-  const espSize      = Math.min(12,  Math.max(5,  Math.round(avatarSize   * (n >= 6 ? 0.148 : 0.115))));
-  const itemPadV     = Math.min(14,  Math.max(2,  Math.round(spacePerItem * 0.032)));
-  const stripeH      = Math.min(34,  Math.max(10, Math.round(avatarSize   * 0.42)));
+  // ── Cálculo de tamanhos dinâmicos ────────────────────────────
+  // Área disponível para os profissionais (body height - divider)
+  const BODY_H    = 530; // px disponíveis no body
+  const DIVIDER_H = 32;  // altura do divider fixo
+  const AVAIL_H   = BODY_H - DIVIDER_H;
+
+  // Tamanhos por faixa de quantidade
+  let avatarSize, nomeSize, espSize, itemPadV, gap, stripeH;
+
+  if (n <= 2) {
+    avatarSize = 80; nomeSize = 17; espSize = 9.5; itemPadV = 10; gap = 14; stripeH = 36;
+  } else if (n === 3) {
+    avatarSize = 70; nomeSize = 15; espSize = 9;   itemPadV = 8;  gap = 10; stripeH = 30;
+  } else if (n === 4) {
+    avatarSize = 60; nomeSize = 14; espSize = 8.5; itemPadV = 7;  gap = 8;  stripeH = 26;
+  } else if (n === 5) {
+    avatarSize = 52; nomeSize = 13; espSize = 8;   itemPadV = 6;  gap = 7;  stripeH = 22;
+  } else if (n === 6) {
+    avatarSize = 46; nomeSize = 12; espSize = 7.5; itemPadV = 5;  gap = 6;  stripeH = 20;
+  } else if (n <= 8) {
+    avatarSize = 40; nomeSize = 11; espSize = 7;   itemPadV = 4;  gap = 5;  stripeH = 18;
+  } else if (n <= 10) {
+    avatarSize = 34; nomeSize = 10; espSize = 6.5; itemPadV = 3;  gap = 4;  stripeH = 15;
+  } else {
+    avatarSize = 28; nomeSize = 9;  espSize = 6;   itemPadV = 2;  gap = 3;  stripeH = 12;
+  }
+
+  // Garante que tudo cabe: calcula altura de cada item e reduz se necessário
+  const itemH    = avatarSize + itemPadV * 2;
+  const totalH   = itemH * n + gap * (n - 1);
+  if (n > 0 && totalH > AVAIL_H) {
+    const ratio   = AVAIL_H / totalH;
+    avatarSize    = Math.max(22, Math.floor(avatarSize * ratio));
+    nomeSize      = Math.max(8,  Math.floor(nomeSize   * ratio));
+    espSize       = Math.max(5.5,Math.floor(espSize    * ratio * 10) / 10);
+    itemPadV      = Math.max(1,  Math.floor(itemPadV   * ratio));
+    stripeH       = Math.max(10, Math.floor(stripeH    * ratio));
+    gap           = Math.max(2,  Math.floor(gap        * ratio));
+  }
 
   const profsHtml = n === 0
     ? `<div class="card-empty">
@@ -299,9 +331,9 @@ function gerarCardHtml(useBase64 = false) {
             : `<div class="av-inicial" style="font-size:${Math.round(avatarSize * .38)}px;">${iniciais(p.nome)}</div>`;
         }
         return `
-          <div class="card-prof-item" style="padding:${itemPadV}px 18px;">
+          <div class="card-prof-item" style="padding:${itemPadV}px 20px; gap:${Math.round(avatarSize * 0.16) + 6}px;">
             <div class="card-prof-av" style="width:${avatarSize}px;height:${avatarSize}px;">${avHtml}</div>
-            <div class="card-prof-stripe" style="height:${stripeH}px;"></div>
+            <div class="card-prof-stripe" style="height:${stripeH}px;margin:0 ${Math.max(2, Math.round(avatarSize*.06))}px;"></div>
             <div class="card-prof-info">
               <div class="card-prof-nome" style="font-size:${nomeSize}px;">${esc(p.nome) || 'Nome'}</div>
               <div class="card-prof-esp"  style="font-size:${espSize}px;">${esc(p.especialidade) || 'Especialidade'}</div>
@@ -309,15 +341,19 @@ function gerarCardHtml(useBase64 = false) {
           </div>`;
       }).join('');
 
+  // Estilo do container de profs: gap entre items
+  const profsStyle = `style="gap:${gap}px;"`;
+
   return `
     <div class="card-hdr">
       <div class="card-hdr-deco-a"></div>
       <div class="card-hdr-deco-b"></div>
+      <div class="card-hdr-deco-c"></div>
       <div class="card-hdr-content">
         <div class="card-titulo">Agenda</div>
-        <div class="card-subtitulo">Centro Médico AMAR · Atendimentos do Dia</div>
+        <div class="card-subtitulo">Atendimentos do Dia</div>
         <div class="card-data-linha">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;">
             <rect x="3" y="4" width="18" height="18" rx="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/>
             <line x1="8" y1="2" x2="8" y2="6"/>
@@ -333,7 +369,7 @@ function gerarCardHtml(useBase64 = false) {
         <span class="card-divider-label">Profissionais de Plantão</span>
         <div class="card-divider-line"></div>
       </div>
-      <div class="card-profs">${profsHtml}</div>
+      <div class="card-profs" ${profsStyle}>${profsHtml}</div>
     </div>
     <div class="card-footer">
       <img src="../logo-amar.png" style="width:26%;height:auto;" alt="Centro Médico AMAR"
@@ -345,31 +381,32 @@ function gerarCardHtml(useBase64 = false) {
 // ─── CSS INLINE PARA O CLONE (html2canvas) ────────────────────
 const CSS_CLONE = `
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  .card-wrapper{width:405px;height:720px;display:flex;flex-direction:column;overflow:hidden;font-family:'Outfit',sans-serif;background:#FAFAF8;position:relative;}
-  .card-hdr{background:linear-gradient(145deg,#052828 0%,#0A4848 45%,#1B8A8A 100%);position:relative;overflow:hidden;flex-shrink:0;padding:20px 22px 18px;}
-  .card-hdr-deco-a{position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,.07);pointer-events:none;}
-  .card-hdr-deco-b{position:absolute;bottom:-35px;left:-25px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(27,138,138,.4) 0%,transparent 70%);pointer-events:none;}
+  .card-wrapper{width:405px;height:720px;display:flex;flex-direction:column;overflow:hidden;font-family:'Outfit',sans-serif;background:#F7F9F9;position:relative;}
+  .card-hdr{background:linear-gradient(160deg,#031E1E 0%,#083434 40%,#0F5C5C 75%,#1B8A8A 100%);position:relative;overflow:hidden;flex-shrink:0;padding:22px 24px 20px;}
+  .card-hdr-deco-a{position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;border:1.5px solid rgba(27,138,138,.25);pointer-events:none;}
+  .card-hdr-deco-b{position:absolute;top:10px;right:20px;width:90px;height:90px;border-radius:50%;border:1px solid rgba(27,138,138,.15);pointer-events:none;}
+  .card-hdr-deco-c{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:340px;height:40px;background:radial-gradient(ellipse,rgba(27,138,138,.22) 0%,transparent 70%);pointer-events:none;}
   .card-hdr-content{position:relative;z-index:2;}
-  .card-titulo{font-family:'Outfit',sans-serif;font-size:42px;font-weight:800;color:#fff;line-height:.85;letter-spacing:-3px;text-transform:uppercase;}
-  .card-subtitulo{font-size:6.5px;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-top:5px;}
-  .card-data-linha{display:inline-flex;align-items:center;gap:7px;margin-top:14px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:6px 11px;}
-  .card-data-linha span{font-size:11.5px;font-weight:700;color:#fff;letter-spacing:.01em;}
-  .card-body{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#FAFAF8;}
-  .card-divider{display:flex;align-items:center;gap:6px;padding:9px 16px 4px;flex-shrink:0;}
-  .card-divider-line{flex:1;height:1px;background:#B8DEDE;opacity:.45;}
-  .card-divider-label{font-size:6px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#1B8A8A;white-space:nowrap;}
-  .card-profs{flex:1;display:flex;flex-direction:column;justify-content:center;overflow:hidden;}
-  .card-prof-item{display:flex;align-items:center;gap:12px;}
-  .card-prof-av{border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid #B8DEDE;background:#EAF5F5;box-shadow:0 2px 8px rgba(27,138,138,.18);}
+  .card-titulo{font-family:'Outfit',sans-serif;font-size:50px;font-weight:800;color:#fff;line-height:.82;letter-spacing:-4px;text-transform:uppercase;}
+  .card-subtitulo{font-size:6px;font-weight:700;letter-spacing:.30em;text-transform:uppercase;color:rgba(27,138,138,.9);margin-top:6px;}
+  .card-data-linha{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 13px;}
+  .card-data-linha span{font-size:11px;font-weight:700;color:rgba(255,255,255,.92);letter-spacing:.02em;}
+  .card-body{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#F7F9F9;position:relative;}
+  .card-divider{display:flex;align-items:center;gap:8px;padding:11px 20px 5px;flex-shrink:0;}
+  .card-divider-line{flex:1;height:1px;background:#B8DEDE;opacity:.7;}
+  .card-divider-label{font-size:6.5px;font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:#1B8A8A;white-space:nowrap;opacity:.9;}
+  .card-profs{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;width:100%;}
+  .card-prof-item{display:flex;align-items:center;width:100%;position:relative;}
+  .card-prof-av{border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid rgba(27,138,138,.3);background:#EAF5F5;box-shadow:0 0 0 4px rgba(27,138,138,.07),0 3px 10px rgba(27,138,138,.2);}
   .card-prof-av img{width:100%;height:100%;object-fit:cover;display:block;}
-  .card-prof-stripe{width:2px;border-radius:2px;flex-shrink:0;background:linear-gradient(to bottom,#1B8A8A,rgba(27,138,138,.12));}
+  .card-prof-stripe{width:2.5px;border-radius:2px;flex-shrink:0;background:linear-gradient(to bottom,#1B8A8A,rgba(27,138,138,.08));}
   .card-prof-info{flex:1;min-width:0;}
-  .card-prof-nome{font-weight:700;color:#111827;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .card-prof-esp{font-weight:600;color:#1B8A8A;letter-spacing:.05em;text-transform:uppercase;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85;}
+  .card-prof-nome{font-weight:800;color:#0D3333;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-prof-esp{font-weight:600;color:#1B8A8A;letter-spacing:.05em;text-transform:uppercase;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.8;}
   .card-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#D1D5DB;font-size:10px;line-height:1.8;}
-  .card-footer{background:linear-gradient(to right,#E8EAEC,#EFF1F3);padding:8px 16px;border-top:1px solid #DDE0E3;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-  .card-footer-txt{font-size:6.5px;font-weight:700;color:#6B7280;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;}
-  .av-inicial{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:600;color:#1B8A8A;}
+  .card-footer{background:linear-gradient(to right,#E4ECEC,#EDF3F3,#E4ECEC);padding:9px 18px;border-top:1px solid rgba(27,138,138,.2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .card-footer-txt{font-size:6.5px;font-weight:800;color:#1B8A8A;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:.7;}
+  .av-inicial{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;color:#1B8A8A;background:linear-gradient(135deg,#EAF5F5,#D0EDED);}
 `;
 
 // ─── PREVIEW AO VIVO ──────────────────────────────────────────

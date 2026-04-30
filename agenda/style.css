@@ -1,5 +1,5 @@
 /* ============================================================
-   Centro Médico AMAR · Agenda do Dia
+   Centro Médico AMAR · Agenda do Dia — Design Refinado
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -160,103 +160,152 @@ html, body {
 /* ── PREVIEW ─────────────────────────────────────────── */
 .preview-area {
   flex: 1; overflow: hidden; height: 100%;
-  background: #111B1B;
+  background: #0D1A1A;
   background-image:
-    radial-gradient(circle at 30% 20%, rgba(27,138,138,.09) 0%, transparent 60%),
-    radial-gradient(circle at 70% 80%, rgba(27,138,138,.06) 0%, transparent 60%);
+    radial-gradient(ellipse at 20% 10%, rgba(27,138,138,.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(27,138,138,.10) 0%, transparent 55%);
   display: flex; align-items: center; justify-content: center;
 }
 
-/* O card-outer usa CSS custom property para o scale */
 .card-outer {
   --card-scale: 1;
   width:  calc(405px * var(--card-scale));
   height: calc(720px * var(--card-scale));
   flex-shrink: 0;
-  box-shadow: 0 24px 56px rgba(0,0,0,.65), 0 8px 20px rgba(0,0,0,.35);
-  border-radius: calc(18px * var(--card-scale));
+  box-shadow:
+    0 32px 80px rgba(0,0,0,.75),
+    0 8px 24px rgba(0,0,0,.5),
+    0 0 0 1px rgba(27,138,138,.15);
+  border-radius: calc(20px * var(--card-scale));
   overflow: hidden;
-  /* Escala o conteúdo interno com zoom para não precisar de transform */
   zoom: var(--card-scale);
 }
 
-/* ── CARD 405×720 ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   CARD 405×720 — DESIGN RENOVADO
+   ═══════════════════════════════════════════════════════ */
 .card-wrapper {
   width: 405px; height: 720px;
   display: flex; flex-direction: column;
   overflow: hidden; font-family: 'Outfit', sans-serif;
-  background: #FAFAF8; position: relative;
+  background: #F7F9F9; position: relative;
 }
 
 /* ── HEADER DO CARD ───────────────────────────────────── */
 .card-hdr {
-  background: linear-gradient(145deg, #052828 0%, #0A4848 45%, #1B8A8A 100%);
+  background: linear-gradient(160deg, #031E1E 0%, #083434 40%, #0F5C5C 75%, #1B8A8A 100%);
   position: relative; overflow: hidden; flex-shrink: 0;
-  padding: 20px 22px 18px;
+  padding: 22px 24px 20px;
 }
 .card-hdr-deco-a {
-  position: absolute; top: -50px; right: -50px;
-  width: 200px; height: 200px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.07); pointer-events: none;
-}
-.card-hdr-deco-b {
-  position: absolute; bottom: -35px; left: -25px;
-  width: 140px; height: 140px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(27,138,138,.4) 0%, transparent 70%);
+  position: absolute; top: -40px; right: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  border: 1.5px solid rgba(27,138,138,.25);
   pointer-events: none;
 }
+.card-hdr-deco-b {
+  position: absolute; top: 10px; right: 20px;
+  width: 90px; height: 90px; border-radius: 50%;
+  border: 1px solid rgba(27,138,138,.15);
+  pointer-events: none;
+}
+.card-hdr-deco-c {
+  position: absolute; bottom: -20px; left: 50%;
+  transform: translateX(-50%);
+  width: 340px; height: 40px;
+  background: radial-gradient(ellipse, rgba(27,138,138,.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+.card-hdr::before {
+  content: '';
+  position: absolute; top: 0; left: 24px; right: 24px; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(27,138,138,.6), rgba(255,255,255,.25), rgba(27,138,138,.6), transparent);
+}
+
 .card-hdr-content { position: relative; z-index: 2; }
+
 .card-titulo {
-  font-family: 'Outfit', sans-serif; font-size: 42px; font-weight: 800;
-  color: #fff; line-height: .85; letter-spacing: -3px; text-transform: uppercase;
+  font-family: 'Outfit', sans-serif; font-size: 50px; font-weight: 800;
+  color: #fff; line-height: .82; letter-spacing: -4px; text-transform: uppercase;
 }
 .card-subtitulo {
-  font-size: 6.5px; font-weight: 600; letter-spacing: .26em;
-  text-transform: uppercase; color: rgba(255,255,255,.38); margin-top: 5px;
+  font-size: 6px; font-weight: 700; letter-spacing: .30em;
+  text-transform: uppercase; color: rgba(27,138,138,.9); margin-top: 6px;
 }
 .card-data-linha {
-  display: inline-flex; align-items: center; gap: 7px;
-  margin-top: 14px;
-  background: rgba(255,255,255,.11);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 6px; padding: 6px 11px;
-  backdrop-filter: blur(6px);
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 16px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px; padding: 7px 13px;
 }
 .card-data-linha span {
-  font-size: 11.5px; font-weight: 700; color: #fff; letter-spacing: .01em;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.92); letter-spacing: .02em;
 }
 
 /* ── CORPO DO CARD ────────────────────────────────────── */
 .card-body {
   flex: 1; display: flex; flex-direction: column; overflow: hidden;
-  background: #FAFAF8;
+  background: #F7F9F9; position: relative;
 }
+.card-body::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(to right, transparent, #1B8A8A, #4ABCBC, #1B8A8A, transparent);
+  opacity: .35;
+}
+
 .card-divider {
-  display: flex; align-items: center; gap: 6px;
-  padding: 9px 16px 4px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 20px 5px; flex-shrink: 0;
 }
-.card-divider-line { flex: 1; height: 1px; background: var(--teal-mid); opacity: .45; }
+.card-divider-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--teal-mid), transparent); opacity: .7; }
 .card-divider-label {
-  font-size: 6px; font-weight: 800; letter-spacing: .22em;
-  text-transform: uppercase; color: var(--teal); white-space: nowrap;
+  font-size: 6.5px; font-weight: 800; letter-spacing: .26em;
+  text-transform: uppercase; color: var(--teal); white-space: nowrap; opacity: .9;
 }
+
+/* ── PROFISSIONAIS ────────────────────────────────────── */
 .card-profs {
   flex: 1; display: flex; flex-direction: column;
-  justify-content: center; overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 100%;
 }
-.card-prof-item { display: flex; align-items: center; gap: 12px; }
+
+.card-prof-item {
+  display: flex; align-items: center;
+  width: 100%;
+  position: relative;
+}
+.card-prof-item:not(:last-child)::after {
+  content: '';
+  position: absolute; bottom: 0; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(184,222,222,.45), transparent);
+}
+
 .card-prof-av {
   border-radius: 50%; overflow: hidden; flex-shrink: 0;
-  border: 2px solid var(--teal-mid); background: var(--teal-light); position: relative;
-  box-shadow: 0 2px 8px rgba(27,138,138,.18);
+  border: 2.5px solid rgba(27,138,138,.3);
+  background: var(--teal-light); position: relative;
+  box-shadow: 0 0 0 4px rgba(27,138,138,.07), 0 3px 10px rgba(27,138,138,.2);
 }
 .card-prof-stripe {
-  width: 2px; border-radius: 2px; flex-shrink: 0;
-  background: linear-gradient(to bottom, var(--teal), rgba(27,138,138,.12));
+  width: 2.5px; border-radius: 2px; flex-shrink: 0;
+  background: linear-gradient(to bottom, #1B8A8A, rgba(27,138,138,.08));
 }
 .card-prof-info { flex: 1; min-width: 0; }
-.card-prof-nome { font-weight: 700; color: var(--gray-900); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card-prof-esp  { font-weight: 600; color: var(--teal); letter-spacing: .05em; text-transform: uppercase; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
+.card-prof-nome {
+  font-weight: 800; color: #0D3333;
+  line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-prof-esp {
+  font-weight: 600; color: var(--teal); letter-spacing: .05em;
+  text-transform: uppercase; margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8;
+}
 .card-empty {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 24px; text-align: center; color: var(--gray-300); font-size: 10px; line-height: 1.8;
@@ -264,13 +313,20 @@ html, body {
 
 /* ── RODAPÉ DO CARD ───────────────────────────────────── */
 .card-footer {
-  background: linear-gradient(to right, #E8EAEC, #EFF1F3);
-  padding: 8px 16px; border-top: 1px solid #DDE0E3;
+  background: linear-gradient(to right, #E4ECEC, #EDF3F3, #E4ECEC);
+  padding: 9px 18px; border-top: 1px solid rgba(27,138,138,.2);
   display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
 }
 .card-footer-txt {
-  font-size: 6.5px; font-weight: 700; color: var(--gray-500);
-  letter-spacing: .13em; text-transform: uppercase; white-space: nowrap;
+  font-size: 6.5px; font-weight: 800; color: var(--teal);
+  letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; opacity: .7;
+}
+
+/* ── AV INICIAL ──────────────────────────────────────── */
+.av-inicial {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif; font-weight: 800; color: var(--teal);
+  background: linear-gradient(135deg, #EAF5F5, #D0EDED);
 }
 
 /* ── TOAST ───────────────────────────────────────────── */
