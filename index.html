@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TV Recepção · Centro Médico AMAR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #1B8A8A;
+    --teal-dark: #0D5C5C;
+    --teal-xlight: #F2FAFA;
+    --amber: #C98A1A;
+    --white: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100vh; overflow:hidden; font-family:'Outfit', sans-serif; background:#000; }
+
+  /* TV Brasil fica SEMPRE carregada, no fundo, nunca recarrega */
+  #camada-tvbrasil {
+    position:fixed; inset:0; z-index:1; background:#000;
+  }
+  #camada-tvbrasil iframe { width:100%; height:100%; border:none; }
+
+  /* Cortina cobre a TV Brasil quando outro conteúdo está passando */
+  #cortina {
+    position:fixed; inset:0; z-index:10;
+    display:none;
+  }
+  #cortina.ativa { display:block; }
+
+  .tela {
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    background: radial-gradient(circle at 20% 15%, var(--teal) 0%, var(--teal-dark) 55%, #082f2f 100%);
+  }
+  .tela.ativa { display:flex; }
+
+  .marca {
+    position:absolute; top:30px; left:40px; z-index:20;
+    font-family:'Cormorant Garamond', serif; font-size:1.9em; font-weight:600;
+    color:#fff; letter-spacing:.3px;
+    text-shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+  .marca img { height:34px; display:block; }
+  .marca .txt { display:none; align-items:center; gap:10px; }
+  .marca img.erro { display:none; }
+  .marca img.erro + .txt { display:flex; }
+  .marca .dot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  .marca em { font-style:italic; color:var(--teal-xlight); }
+
+  .relogio {
+    position:absolute; top:32px; right:40px; z-index:20;
+    color:#fff; font-size:1.15em; font-weight:600; opacity:.9;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+
+  /* ── EMPRESA (slides em tela cheia) ────────────────────────── */
+  .midia-full { position:absolute; inset:0; background:#000; }
+  .midia-full img, .midia-full video { width:100%; height:100%; object-fit:cover; display:block; }
+  .midia-full::after {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 20%, transparent 78%, rgba(0,0,0,.5) 100%);
+    pointer-events:none;
+  }
+  .comunicado-card {
+    background: rgba(255,255,255,.08); backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(255,255,255,.2); border-radius:24px;
+    padding:60px 80px; text-align:center; max-width:78%;
+  }
+  .comunicado-card .titulo { font-family:'Cormorant Garamond', serif; font-size:3.2em; color:#fff; font-weight:600; margin-bottom:14px; }
+  .comunicado-card .desc { font-size:1.3em; color:var(--teal-xlight); opacity:.85; }
+
+  /* ── TEMPO ────────────────────────────────────────────────── */
+  .tempo-card {
+    background: rgba(255,255,255,.08); backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(255,255,255,.2); border-radius:28px;
+    padding:50px 70px; color:#fff; min-width:600px; text-align:center;
+  }
+  .tempo-eyebrow { font-size:.95em; letter-spacing:.2em; text-transform:uppercase; color:var(--teal-xlight); opacity:.75; margin-bottom:6px; }
+  .tempo-cidade { font-family:'Cormorant Garamond', serif; font-size:2.4em; font-weight:600; margin-bottom:20px; }
+  .tempo-main { display:flex; align-items:center; justify-content:center; gap:28px; margin-bottom:26px; }
+  .tempo-ic { font-size:5em; line-height:1; }
+  .tempo-graus { font-size:5.5em; font-weight:700; }
+  .tempo-desc { font-size:1.3em; opacity:.85; margin-top:-14px; }
+  .tempo-meta { display:flex; justify-content:center; gap:36px; margin-bottom:28px; font-size:1.1em; opacity:.9; }
+  .tempo-meta div b { display:block; font-size:1.3em; }
+  .tempo-previsao { display:flex; justify-content:center; gap:22px; border-top:1px solid rgba(255,255,255,.2); padding-top:22px; }
+  .tempo-dia { text-align:center; font-size:1.05em; opacity:.9; }
+  .tempo-dia .d { font-weight:700; text-transform:capitalize; margin-bottom:4px; }
+  .tempo-dia .ic { font-size:1.8em; margin:4px 0; }
+
+  /* ── NOTÍCIAS ─────────────────────────────────────────────── */
+  .noticias-card {
+    background: rgba(255,255,255,.08); backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(255,255,255,.2); border-radius:24px;
+    padding:44px 60px; width:76%; max-width:900px; color:#fff;
+  }
+  .noticias-eyebrow { font-size:1em; letter-spacing:.2em; text-transform:uppercase; color:var(--teal-xlight); opacity:.75; margin-bottom:18px; }
+  .noticia-item { border-left:4px solid var(--amber); padding:6px 0 6px 18px; margin-bottom:18px; font-size:1.35em; line-height:1.35; }
+  .noticia-item:last-child { margin-bottom:0; }
+
+  .estado-vazio { color:#fff; font-size:1.4em; opacity:.8; text-align:center; }
+</style>
+</head>
+<body>
+
+  <!-- TV Brasil: carregada uma única vez, nunca recarrega -->
+  <div id="camada-tvbrasil">
+    <iframe id="iframe-tvbrasil" allow="autoplay"></iframe>
+  </div>
+
+  <!-- Cortina: cobre a TV Brasil quando outro conteúdo estiver passando -->
+  <div id="cortina">
+
+    <div id="tela-empresa" class="tela">
+      <div class="marca">
+        <img src="logo-amar.png" onerror="this.classList.add('erro')">
+        <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
+      </div>
+      <div class="relogio" id="relogio1"></div>
+      <div id="conteudo-empresa"></div>
+    </div>
+
+    <div id="tela-tempo" class="tela">
+      <div class="marca">
+        <img src="logo-amar.png" onerror="this.classList.add('erro')">
+        <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
+      </div>
+      <div class="relogio" id="relogio2"></div>
+      <div id="conteudo-tempo"></div>
+    </div>
+
+    <div id="tela-noticias" class="tela">
+      <div class="marca">
+        <img src="logo-amar.png" onerror="this.classList.add('erro')">
+        <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
+      </div>
+      <div class="relogio" id="relogio3"></div>
+      <div id="conteudo-noticias"></div>
+    </div>
+
+  </div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+const API = 'https://tv-amar.andrewmssantos.workers.dev';
+const TVBRASIL_URL = 'https://aovivo.ebc.com.br/embed-tvbrasil.html';
+const LAT = -12.2667, LON = -38.9667;
+
+// Fontes de notícias, em ordem de tentativa (a 1ª que responder, vence)
+const FONTES_NOTICIAS = [
+  'https://www.acordacidade.com.br/feed/',
+  'https://news.google.com/rss/search?q=Feira%20de%20Santana&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+];
+
+const DURACAO = {
+  tvbrasil: 30 * 1000,   // depois trocar pra 10*60*1000 (10min)
+  imagem:   8 * 1000,    // por slide de imagem
+  tempo:    15 * 1000,
+  noticias: 20 * 1000,
+};
+
+const ORDEM_TELAS = ['tvbrasil', 'empresa', 'tempo', 'noticias'];
+let idxTelaAtual = 0;
+let slidesEmpresa = [];
+let timerAtual = null;
+
+// ── RELÓGIO ───────────────────────────────────────────────────────
+function atualizarRelogio() {
+  const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  ['relogio1','relogio2','relogio3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = hora;
+  });
+}
+setInterval(atualizarRelogio, 1000 * 10);
+atualizarRelogio();
+
+// ── CONTROLE DE TELAS ─────────────────────────────────────────────
+function limparAgendamento() {
+  if (timerAtual) { clearTimeout(timerAtual); timerAtual = null; }
+}
+
+function mostrarTelaInterna(nome) {
+  document.querySelectorAll('#cortina .tela').forEach(t => t.classList.remove('ativa'));
+  const el = document.getElementById('tela-' + nome);
+  if (el) el.classList.add('ativa');
+}
+
+function avancar() {
+  idxTelaAtual = (idxTelaAtual + 1) % ORDEM_TELAS.length;
+  proximaTela();
+}
+
+function agendar(ms, fn) {
+  limparAgendamento();
+  timerAtual = setTimeout(fn, ms);
+}
+
+async function proximaTela() {
+  const nome = ORDEM_TELAS[idxTelaAtual];
+  const cortina = document.getElementById('cortina');
+
+  if (nome === 'tvbrasil') {
+    // Só esconde a cortina. O iframe nunca é tocado, então segue rodando
+    // (e com o mesmo estado de play/mute que o usuário deixou).
+    cortina.classList.remove('ativa');
+    agendar(DURACAO.tvbrasil, avancar);
+    return;
+  }
+
+  cortina.classList.add('ativa');
+
+  if (nome === 'empresa') {
+    await rodarSlidesEmpresa();
+  }
+
+  if (nome === 'tempo') {
+    await carregarTempo();
+    mostrarTelaInterna('tempo');
+    agendar(DURACAO.tempo, avancar);
+  }
+
+  if (nome === 'noticias') {
+    await carregarNoticias();
+    mostrarTelaInterna('noticias');
+    agendar(DURACAO.noticias, avancar);
+  }
+}
+
+// ── SLIDES DA EMPRESA ─────────────────────────────────────────────
+async function carregarSlidesEmpresa() {
+  try {
+    const r = await fetch(`${API}/tv_propaganda`);
+    const todos = await r.json();
+    const hoje = new Date().toISOString().slice(0, 10);
+    slidesEmpresa = todos.filter(it => {
+      if (it.data_inicio && it.data_inicio > hoje) return false;
+      if (it.data_final && it.data_final < hoje) return false;
+      return true;
+    });
+  } catch (e) {
+    slidesEmpresa = [];
+  }
+}
+
+async function rodarSlidesEmpresa() {
+  await carregarSlidesEmpresa();
+  const el = document.getElementById('conteudo-empresa');
+  mostrarTelaInterna('empresa');
+
+  if (!slidesEmpresa.length) {
+    el.innerHTML = '<div class="estado-vazio">Nenhum conteúdo cadastrado no momento.</div>';
+    agendar(3000, avancar);
+    return;
+  }
+
+  let i = 0;
+  const mostrarSlide = () => {
+    const it = slidesEmpresa[i];
+
+    if (it.tipo === 'video') {
+      el.innerHTML = `<div class="midia-full"><video src="${it.url}" autoplay muted playsinline></video></div>`;
+      const video = el.querySelector('video');
+      // avança quando o vídeo terminar (duração = duração do próprio vídeo)
+      video.addEventListener('ended', proximoSlideOuTela, { once:true });
+      // rede de segurança, caso o vídeo falhe/trave: 3min max
+      agendar(3 * 60 * 1000, proximoSlideOuTela);
+
+    } else if (it.tipo === 'comunicado') {
+      el.innerHTML = `<div class="tela" style="position:absolute;inset:0;display:flex"><div class="comunicado-card"><div class="titulo">${it.nome}</div><div class="desc">${it.descricao || ''}</div></div></div>`;
+      agendar(DURACAO.imagem, proximoSlideOuTela);
+
+    } else {
+      el.innerHTML = `<div class="midia-full"><img src="${it.url}" alt=""></div>`;
+      agendar(DURACAO.imagem, proximoSlideOuTela);
+    }
+  };
+
+  function proximoSlideOuTela() {
+    i++;
+    if (i < slidesEmpresa.length) {
+      mostrarSlide();
+    } else {
+      avancar();
+    }
+  }
+
+  mostrarSlide();
+}
+
+// ── TEMPO (Open-Meteo, Feira de Santana) ──────────────────────────
+const ICONES_TEMPO = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',
+  45:'🌫️',48:'🌫️',
+  51:'🌦️',53:'🌦️',55:'🌦️',
+  61:'🌧️',63:'🌧️',65:'🌧️',
+  71:'🌨️',73:'🌨️',75:'🌨️',
+  80:'🌦️',81:'🌧️',82:'⛈️',
+  95:'⛈️',96:'⛈️',99:'⛈️',
+};
+const DESC_TEMPO = {
+  0:'Céu limpo',1:'Poucas nuvens',2:'Parcialmente nublado',3:'Nublado',
+  45:'Neblina',48:'Neblina',
+  51:'Garoa fraca',53:'Garoa',55:'Garoa forte',
+  61:'Chuva fraca',63:'Chuva',65:'Chuva forte',
+  71:'Neve fraca',73:'Neve',75:'Neve forte',
+  80:'Pancadas de chuva',81:'Pancadas de chuva',82:'Pancadas fortes',
+  95:'Tempestade',96:'Tempestade',99:'Tempestade forte',
+};
+
+async function carregarTempo() {
+  const el = document.getElementById('conteudo-tempo');
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+      `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+      `&timezone=America%2FSao_Paulo&forecast_days=4`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const c = d.current;
+    const ic = ICONES_TEMPO[c.weather_code] || '🌡️';
+    const desc = DESC_TEMPO[c.weather_code] || '';
+
+    const dias = d.daily.time.slice(1, 4).map((data, idx) => {
+      const nomeDia = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'short' });
+      const codigo = d.daily.weather_code[idx+1];
+      return `<div class="tempo-dia">
+        <div class="d">${nomeDia}</div>
+        <div class="ic">${ICONES_TEMPO[codigo] || '🌡️'}</div>
+        <div>${Math.round(d.daily.temperature_2m_max[idx+1])}° / ${Math.round(d.daily.temperature_2m_min[idx+1])}°</div>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="tempo-card">
+        <div class="tempo-eyebrow">Previsão do tempo</div>
+        <div class="tempo-cidade">Feira de Santana, BA</div>
+        <div class="tempo-main">
+          <div class="tempo-ic">${ic}</div>
+          <div class="tempo-graus">${Math.round(c.temperature_2m)}°</div>
+        </div>
+        <div class="tempo-desc">${desc}</div>
+        <div class="tempo-meta">
+          <div>Sensação<b>${Math.round(c.apparent_temperature)}°</b></div>
+          <div>Umidade<b>${c.relative_humidity_2m}%</b></div>
+          <div>Vento<b>${Math.round(c.wind_speed_10m)} km/h</b></div>
+        </div>
+        <div class="tempo-previsao">${dias}</div>
+      </div>`;
+  } catch (e) {
+    el.innerHTML = '<div class="estado-vazio">Previsão do tempo indisponível no momento.</div>';
+  }
+}
+
+// ── NOTÍCIAS (tenta Acorda Cidade, cai pro Google Notícias) ───────
+const PROXIES_NOTICIAS = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+];
+
+async function buscarFeedComFallback() {
+  for (const feedUrl of FONTES_NOTICIAS) {
+    for (const montarUrl of PROXIES_NOTICIAS) {
+      try {
+        const r = await fetch(montarUrl(feedUrl));
+        if (!r.ok) continue;
+        const texto = await r.text();
+        const xml = new DOMParser().parseFromString(texto, 'text/xml');
+        if (xml.querySelector('parsererror')) continue;
+        const items = Array.from(xml.querySelectorAll('item'));
+        if (items.length) return items;
+      } catch (e) { /* tenta a próxima combinação */ }
+    }
+  }
+  return [];
+}
+
+async function carregarNoticias() {
+  const el = document.getElementById('conteudo-noticias');
+  try {
+    const items = (await buscarFeedComFallback()).slice(0, 5);
+    if (!items.length) throw new Error('vazio');
+
+    const html = items.map(it => {
+      let titulo = it.querySelector('title')?.textContent || '';
+      titulo = titulo.replace(/\s-\s[^-]+$/, ''); // remove " - Nome do veículo" do fim (Google Notícias)
+      return `<div class="noticia-item">${titulo}</div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="noticias-card">
+        <div class="noticias-eyebrow">Notícias · Feira de Santana</div>
+        ${html}
+      </div>`;
+  } catch (e) {
+    el.innerHTML = '<div class="estado-vazio">Notícias indisponíveis no momento.</div>';
+  }
+}
+
+// ── START ─────────────────────────────────────────────────────────
+document.getElementById('iframe-tvbrasil').src = TVBRASIL_URL;
+proximaTela();
+</script>
+</body>
+</html>
