@@ -196,9 +196,56 @@
   @keyframes rolar { from { transform:translateX(0); } to { transform:translateX(-50%); } }
 
   .estado-vazio { color:rgba(255,255,255,.55); font-size:1.1em; }
+
+  /* ── BLOQUEIO PARA TELAS PEQUENAS ──────────────────────────────────
+     Este painel foi feito pra rodar em TVs (ou no máximo em um
+     computador). Em celulares e tablets, em vez de mostrar o layout
+     quebrado, exibimos um aviso pedindo um dispositivo maior. */
+  #bloqueio-tela-pequena {
+    display:none; /* só vira flex quando a media query abaixo bate */
+    position:fixed; inset:0; z-index:9999;
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:22px; text-align:center; padding:40px;
+    background:
+      radial-gradient(circle at 22% 24%, rgba(16,179,160,.25), transparent 55%),
+      radial-gradient(circle at 80% 78%, rgba(232,172,59,.2), transparent 55%),
+      linear-gradient(160deg, #0A1210 0%, #0D1917 55%, #090F0E 100%);
+  }
+  #bloqueio-tela-pequena .icone-tela {
+    width:84px; height:84px; color:var(--teal);
+  }
+  #bloqueio-tela-pequena .icone-tela svg { width:100%; height:100%; }
+  #bloqueio-tela-pequena .titulo-bloqueio {
+    font-family:'Cormorant Garamond', serif; font-size:2em; font-weight:600;
+    color:#fff; max-width:520px; line-height:1.2;
+  }
+  #bloqueio-tela-pequena .desc-bloqueio {
+    font-size:1.05em; color:rgba(255,255,255,.65); max-width:440px; line-height:1.5;
+  }
+
+  /* Considera "tela pequena" celulares e tablets: largura curta OU
+     ponteiro grosso (toque) sem hover — TVs e PCs não caem aqui. */
+  @media (max-width:900px), (pointer:coarse) and (max-width:1180px) {
+    #bloqueio-tela-pequena { display:flex; }
+    #palco, #selo-marca, #selo-info, #barra-ticker { display:none !important; }
+  }
 </style>
 </head>
 <body>
+
+  <!-- Bloqueio: exibido apenas em celulares/tablets (ver media query no <style>) -->
+  <div id="bloqueio-tela-pequena">
+    <div class="icone-tela">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="22" width="80" height="52" rx="6"/>
+        <path d="M38 86h24"/>
+        <path d="M50 74v12"/>
+        <path d="M28 44l14 14 8-8 12 12"/>
+      </svg>
+    </div>
+    <div class="titulo-bloqueio">Visualização não disponível neste dispositivo</div>
+    <div class="desc-bloqueio">Este painel foi feito para TVs e computadores. Tente acessar por um dispositivo com tela maior.</div>
+  </div>
 
   <!-- PALCO: conteúdo cadastrado no banco de dados, sempre 100vw x 100vh -->
   <div id="palco">
