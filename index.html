@@ -9,665 +9,472 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ── Paleta profissional, clara, para TV de clínica ── */
-    --bg:        #F7F5F1;   /* branco quente, tipo papel */
-    --bg-card:   #FFFFFF;
-    --ink:       #232B2F;   /* quase-preto, mais confortável que preto puro */
-    --ink-soft:  #6C7680;
-    --ink-faint: #9AA3AA;
-    --linha:     #E7E3DA;
-    --teal:      #0E6659;   /* teal desaturado, só como sotaque */
-    --teal-suave:#E3EEEC;
-    --amber:     #B07A2E;
-    --amber-suave:#F3E9D6;
-    --vivo:      #C0524A;
-    --sombra: 0 10px 24px -14px rgba(35,43,47,.16), 0 1px 3px rgba(35,43,47,.05);
+    --teal:        #10B3A0;
+    --amber:       #E8AC3B;
+    --vivo:        #E8544A;
+    --vidro:       rgba(10,16,18,.42);
+    --vidro-forte: rgba(8,12,14,.62);
+    --borda-vidro: rgba(255,255,255,.14);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  html, body { width:100%; height:100vh; overflow:hidden; font-family:'Outfit', sans-serif; background:#000; }
-
-  /* textura de ruído sutil, discreta, sem pesar nos olhos */
-  .ruido {
-    content:''; position:absolute; inset:0; pointer-events:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    background-repeat:repeat; mix-blend-mode:multiply; opacity:.55;
+  html, body {
+    width:100vw; height:100vh; overflow:hidden;
+    font-family:'Outfit', sans-serif; background:#05070a;
   }
 
-  /* TV Brasil fica SEMPRE carregada, no fundo, nunca recarrega.
-     Quando "mini", ela vira um PIP flutuante no canto, por cima da cortina. */
-  #camada-tvbrasil {
-    position:fixed; top:0; right:0; width:100%; height:100%;
-    z-index:1; background:#000; overflow:hidden; border-radius:0;
-    box-shadow:0 0 0 0 rgba(0,0,0,0);
-    transition:
-      top .7s cubic-bezier(.65,0,.35,1),
-      right .7s cubic-bezier(.65,0,.35,1),
-      width .7s cubic-bezier(.65,0,.35,1),
-      height .7s cubic-bezier(.65,0,.35,1),
-      border-radius .5s ease .1s,
-      box-shadow .5s ease .1s;
+  /* ── PALCO: onde o conteúdo do banco de dados passa, 100vw x 100vh ── */
+  #palco { position:fixed; inset:0; width:100vw; height:100vh; background:#05070a; }
+  .camada-midia {
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; transition:opacity .9s ease;
   }
-  #camada-tvbrasil iframe { width:100%; height:100%; border:none; display:block; }
-
-  #camada-tvbrasil.mini {
-    top:16px; right:24px; width:180px; height:101px;
-    z-index:50; border-radius:14px;
-    box-shadow:0 12px 32px rgba(0,0,0,.5), 0 0 0 1.5px rgba(255,255,255,.16);
+  .camada-midia.ativa { opacity:1; z-index:2; }
+  .midia-full { position:absolute; inset:0; width:100%; height:100%; background:#000; }
+  .midia-full img, .midia-full video {
+    width:100%; height:100%; object-fit:cover; display:block;
   }
-
-  /* Selo "AO VIVO" que só aparece quando a TV Brasil está em modo PIP */
-  .tvbrasil-badge {
-    position:absolute; bottom:8px; left:8px; z-index:2;
-    display:none; align-items:center; gap:5px;
-    background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
-    padding:4px 9px 4px 7px; border-radius:100px;
-    font-size:.62em; font-weight:600; color:#fff; letter-spacing:.04em;
-    opacity:0; transition:opacity .35s ease .3s;
-  }
-  #camada-tvbrasil.mini .tvbrasil-badge { display:flex; opacity:1; }
-  .tvbrasil-badge .ponto { width:7px; height:7px; border-radius:50%; background:#ff4747; animation:pulso 1.4s infinite; }
-  .tvbrasil-badge .mudo { opacity:.75; font-size:.95em; }
-  @keyframes pulso { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-  /* Cortina cobre a TV Brasil quando outro conteúdo está passando */
-  #cortina {
-    position:fixed; inset:0; z-index:10;
-    opacity:0; visibility:hidden; pointer-events:none;
-    transition:opacity .45s ease;
-  }
-  #cortina.ativa { opacity:1; visibility:visible; pointer-events:auto; }
-
-  .tela {
-    position:absolute; inset:0;
-    display:flex; flex-direction:column;
-    opacity:0; pointer-events:none;
-    background: var(--bg);
-    transition:opacity .5s ease;
-  }
-  .tela.ativa { opacity:1; pointer-events:auto; }
-
-  /* Faixa reservada no topo pro logo + relógio. Sua altura já garante
-     espaço livre pra PIP da TV Brasil (canto sup. direito), então o
-     conteúdo abaixo nunca fica escondido atrás do vídeo. */
-  .tela-header {
-    flex:0 0 auto; position:relative; z-index:20;
-    height:130px; padding:28px 48px 0;
-  }
-  .tela-conteudo {
-    flex:1 1 auto; min-height:0;
-    display:flex; align-items:center; justify-content:center;
-    padding:0 44px 26px;
-  }
-
-  .marca {
-    font-family:'Cormorant Garamond', serif; font-size:2em; font-weight:600;
-    color:var(--ink); letter-spacing:.2px;
-  }
-  .marca img { height:36px; display:block; }
-  .marca .txt { display:none; align-items:center; gap:10px; }
-  .marca img.erro { display:none; }
-  .marca img.erro + .txt { display:flex; }
-  .marca .dot { width:8px; height:8px; border-radius:50%; background:var(--amber); }
-  .marca em { font-style:italic; color:var(--teal); }
-
-  .relogio {
-    position:absolute; top:28px; right:236px; z-index:20;
-    color:var(--ink-soft); font-size:1.1em; font-weight:600;
-    font-variant-numeric: tabular-nums; letter-spacing:.02em;
-  }
-
-  /* ── EMPRESA (slides em tela cheia) ────────────────────────── */
-  .midia-full { position:absolute; inset:0; background:#000; }
-  .midia-full img, .midia-full video { width:100%; height:100%; object-fit:cover; display:block; }
+  /* leve escurecida nas bordas pra logo/relógio/ticker sempre legíveis, em qualquer imagem */
   .midia-full::after {
-    content:''; position:absolute; inset:0;
-    background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 20%, transparent 78%, rgba(0,0,0,.5) 100%);
-    pointer-events:none;
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.55) 0%, transparent 16%, transparent 82%, rgba(0,0,0,.6) 100%);
+  }
+
+  /* ── Slide "comunicado" (aviso institucional), também full bleed ── */
+  .comunicado-bg {
+    position:absolute; inset:0; width:100%; height:100%;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(16,179,160,.35), transparent 55%),
+      radial-gradient(circle at 85% 82%, rgba(232,172,59,.28), transparent 50%),
+      linear-gradient(160deg, #0B1615 0%, #0E1E1C 55%, #0A1412 100%);
+    display:flex; align-items:center; justify-content:center;
   }
   .comunicado-card {
-    background: var(--bg-card); box-shadow: var(--sombra);
-    border: 1px solid var(--linha); border-radius:24px;
-    padding:64px 90px; text-align:center; max-width:78%;
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius:28px;
+    padding:64px 90px; max-width:80%;
+    box-shadow: 0 30px 70px -30px rgba(0,0,0,.6);
+    display:flex; align-items:center; gap:52px;
   }
-  .comunicado-card .titulo { font-family:'Cormorant Garamond', serif; font-size:3.2em; color:var(--ink); font-weight:600; margin-bottom:14px; }
-  .comunicado-card .desc { font-size:1.3em; color:var(--ink-soft); }
+  .comunicado-icone {
+    position:relative; flex-shrink:0;
+    width:120px; height:120px; border-radius:50%;
+    background: linear-gradient(160deg, rgba(16,179,160,.28), rgba(232,172,59,.18));
+    display:flex; align-items:center; justify-content:center;
+    color:var(--teal);
+  }
+  .comunicado-icone svg { width:56px; height:56px; position:relative; z-index:2; }
+  .comunicado-icone .anel-pulso {
+    position:absolute; inset:-8px; border-radius:50%;
+    border:2px solid var(--teal); opacity:.55;
+    animation: pulso-anel 2.2s ease-out infinite;
+  }
+  @keyframes pulso-anel {
+    0%   { transform:scale(.85); opacity:.6; }
+    100% { transform:scale(1.4);  opacity:0;  }
+  }
+  .comunicado-corpo { text-align:left; }
+  .comunicado-eyebrow {
+    display:flex; align-items:center; gap:9px;
+    font-size:.85em; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:14px;
+  }
+  .comunicado-eyebrow .ponto-vivo-com {
+    width:7px; height:7px; border-radius:50%; background:var(--vivo);
+    animation:pulso 1.4s infinite;
+  }
+  .comunicado-card .titulo {
+    font-family:'Cormorant Garamond', serif; font-size:3.2em; font-weight:600;
+    color:#fff; margin-bottom:16px; letter-spacing:.2px; line-height:1.1;
+  }
+  .comunicado-card .desc { font-size:1.28em; color:rgba(255,255,255,.78); line-height:1.45; }
+  .comunicado-audio {
+    display:flex; align-items:center; gap:10px; margin-top:24px;
+    font-size:.8em; color:rgba(255,255,255,.5); letter-spacing:.04em;
+    visibility:hidden;
+  }
+  .comunicado-audio .barra {
+    width:3px; height:12px; background:var(--teal); border-radius:2px;
+    animation: onda-audio 1s ease-in-out infinite;
+  }
+  .comunicado-audio .barra:nth-child(2){ animation-delay:.15s; }
+  .comunicado-audio .barra:nth-child(3){ animation-delay:.3s; }
+  .comunicado-audio .barra:nth-child(4){ animation-delay:.45s; }
+  @keyframes onda-audio { 0%,100%{ transform:scaleY(.4); } 50%{ transform:scaleY(1); } }
 
-  /* ── TEMPO ────────────────────────────────────────────────── */
-  .tempo-wrap { width:92%; max-width:1720px; display:flex; gap:44px; align-items:stretch; }
+  /* ── Estado ocioso (sem conteúdo cadastrado) ── */
+  .estado-ocioso {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:22px; text-align:center;
+    background:
+      radial-gradient(circle at 22% 24%, rgba(16,179,160,.25), transparent 55%),
+      radial-gradient(circle at 80% 78%, rgba(232,172,59,.2), transparent 55%),
+      linear-gradient(160deg, #0A1210 0%, #0D1917 55%, #090F0E 100%);
+  }
+  .estado-ocioso .logo-grande { height:74px; filter: drop-shadow(0 2px 14px rgba(0,0,0,.5)); }
+  .estado-ocioso .logo-grande.erro { display:none; }
+  .estado-ocioso .marca-texto {
+    display:none; font-family:'Cormorant Garamond', serif; font-size:3em;
+    color:#fff; font-weight:600;
+  }
+  .estado-ocioso .logo-grande.erro + .marca-texto { display:block; }
+  .estado-ocioso .marca-texto em { font-style:italic; color:var(--teal); }
+  .estado-ocioso .tagline { font-size:1.15em; color:rgba(255,255,255,.55); letter-spacing:.04em; }
 
-  .tempo-card {
-    background: var(--bg-card); box-shadow: var(--sombra);
-    border: 1px solid var(--linha); border-radius:26px;
-    padding:32px 48px; color:var(--ink); flex:1.35;
+  /* ── BARRA SUPERIOR: logo (esq.) + relógio/tempo (dir.), estilo emissora ── */
+  .selo {
+    position:fixed; top:26px; z-index:30;
+    display:flex; align-items:center; gap:12px;
+    background: var(--vidro); backdrop-filter: blur(14px);
+    border:1px solid var(--borda-vidro); border-radius:100px;
+    box-shadow: 0 14px 34px -16px rgba(0,0,0,.5);
+    color:#fff;
   }
-  .tempo-eyebrow { font-size:.9em; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); font-weight:600; margin-bottom:6px; }
-  .tempo-cidade { font-family:'Cormorant Garamond', serif; font-size:2.3em; font-weight:600; margin-bottom:12px; color:var(--ink); }
-  .tempo-main { display:flex; align-items:center; gap:18px; margin-bottom:2px; }
-  .tempo-ic-wrap { width:100px; height:100px; flex-shrink:0; }
-  .tempo-ic-wrap svg { width:100%; height:100%; display:block; overflow:visible; }
-  .tempo-graus-wrap { text-align:left; }
-  .tempo-graus { font-size:4.6em; font-weight:700; line-height:1; color:var(--ink); }
-  .tempo-desc { font-size:1.15em; color:var(--ink-soft); margin-top:4px; }
-  .tempo-meta { display:flex; gap:26px; margin:20px 0 16px; font-size:.98em; color:var(--ink-soft); flex-wrap:wrap; }
-  .tempo-meta div { min-width:82px; }
-  .tempo-meta div b { display:block; font-size:1.2em; margin-top:2px; color:var(--ink); font-weight:600; }
-  .tempo-meta .uv-baixo b { color:#3E8E5B; }
-  .tempo-meta .uv-moderado b { color:#B07A2E; }
-  .tempo-meta .uv-alto b { color:#C46A2E; }
-  .tempo-meta .uv-muito-alto b, .tempo-meta .uv-extremo b { color:var(--vivo); }
-  .tempo-hoje { display:flex; gap:20px; padding:14px 0;
-    border-top:1px solid var(--linha); border-bottom:1px solid var(--linha); margin-bottom:16px; }
-  .tempo-hora { text-align:center; font-size:.92em; color:var(--ink-soft); min-width:52px; }
-  .tempo-hora .h { opacity:.8; margin-bottom:2px; }
-  .tempo-hora .ic-mini { width:30px; height:30px; margin:2px auto; }
-  .tempo-hora .ic-mini svg { width:100%; height:100%; overflow:visible; }
-  .tempo-hora b { color:var(--ink); }
-  .tempo-hora .pp { font-size:.8em; color:#2E86C7; margin-top:1px; }
-  .tempo-previsao { display:flex; gap:22px; padding-top:2px; }
-  .tempo-dia { text-align:center; font-size:.98em; color:var(--ink-soft); }
-  .tempo-dia .d { font-weight:700; text-transform:capitalize; margin-bottom:4px; color:var(--ink); }
-  .tempo-dia .ic-mini { width:38px; height:38px; margin:2px auto 4px; }
-  .tempo-dia .ic-mini svg { width:100%; height:100%; overflow:visible; }
 
-  .tempo-outras { flex:1; display:flex; flex-direction:column; gap:16px; }
-  .tempo-mini {
-    background: var(--bg-card); box-shadow: var(--sombra);
-    border: 1px solid var(--linha);
-    border-radius:18px; padding:20px 26px 20px 30px;
-    display:flex; align-items:center; gap:18px; flex:1;
-    position:relative; overflow:hidden;
+  /* Logo solta, sem círculo/moldura — só um drop-shadow pra garantir
+     leitura sobre qualquer imagem/vídeo de fundo. */
+  .selo-solta {
+    position:fixed; top:26px; left:30px; z-index:30;
+    display:flex; align-items:center;
   }
-  .tempo-mini::before {
-    content:''; position:absolute; left:0; top:0; bottom:0; width:5px;
-    background:var(--teal);
+  .selo-solta img {
+    height:48px; display:block;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,.55)) drop-shadow(0 0 18px rgba(0,0,0,.35));
   }
-  .tempo-mini .ic-mini { width:52px; height:52px; flex-shrink:0; }
-  .tempo-mini .ic-mini svg { width:100%; height:100%; overflow:visible; }
-  .tempo-mini .info { flex:1; }
-  .tempo-mini .cidade { font-size:1.1em; font-weight:600; color:var(--ink); }
-  .tempo-mini .uf { color:var(--ink-faint); font-weight:500; font-size:.8em; }
-  .tempo-mini .desc { font-size:.9em; color:var(--ink-soft); margin-top:2px; }
-  .tempo-mini .graus { font-size:1.9em; font-weight:700; color:var(--ink); }
-  .tempo-mini .minmax { font-size:.88em; color:var(--ink-soft); margin-top:2px; }
+  .selo-solta img.erro { display:none; }
+  .selo-solta .txt {
+    display:none; align-items:center; gap:9px;
+    font-family:'Cormorant Garamond', serif; font-size:1.7em; font-weight:600; color:#fff;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,.55));
+  }
+  .selo-solta img.erro + .txt { display:flex; }
+  .selo-solta .ponto-marca { width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  .selo-solta em { font-style:italic; color:var(--teal); }
 
-  /* animações dos ícones de clima (SVG) */
-  .w-raios { transform-origin:50px 50px; animation:girar 16s linear infinite; }
-  .w-nuvem { animation:flutuar 4.5s ease-in-out infinite; }
-  .w-gota { animation:cair 1.1s linear infinite; }
-  .w-flash { animation:flash 2.6s ease-in-out infinite; }
-  .w-floco { animation:nevar 3.4s linear infinite; }
-  .w-bruma { animation:deslizar 3.6s ease-in-out infinite; }
-  .w-estrela { animation:piscar 2.2s ease-in-out infinite; }
-  @keyframes girar { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  @keyframes flutuar { 0%,100%{transform:translateX(0)} 50%{transform:translateX(4px)} }
-  @keyframes cair { 0%{transform:translateY(-4px); opacity:0} 40%{opacity:1} 100%{transform:translateY(14px); opacity:0} }
-  @keyframes flash { 0%,88%,100%{opacity:0} 90%,94%{opacity:1} }
-  @keyframes nevar { 0%{transform:translateY(-4px) rotate(0)} 100%{transform:translateY(16px) rotate(180deg)} }
-  @keyframes deslizar { 0%,100%{transform:translateX(-4px); opacity:.6} 50%{transform:translateX(4px); opacity:1} }
-  @keyframes piscar { 0%,100%{opacity:.35} 50%{opacity:1} }
+  #selo-info { right:30px; padding:10px 26px; gap:20px; }
+  .info-relogio { text-align:right; line-height:1.1; }
+  .info-relogio .hora {
+    font-size:1.55em; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.01em;
+  }
+  .info-relogio .data { font-size:.72em; color:rgba(255,255,255,.6); text-transform:capitalize; letter-spacing:.02em; }
+  .info-divisor { width:1px; height:32px; background:rgba(255,255,255,.2); }
+  .info-tempo { display:flex; align-items:center; gap:10px; transition: opacity .25s ease; }
+  .info-tempo .ic { width:34px; height:34px; flex-shrink:0; }
+  .info-tempo .ic svg { width:100%; height:100%; overflow:visible; }
+  .info-tempo .txt-tempo { line-height:1.15; }
+  .info-tempo .graus { font-size:1.2em; font-weight:700; }
+  .info-tempo .cidade { font-size:.68em; color:rgba(255,255,255,.6); }
 
-  /* ── NOTÍCIAS ─────────────────────────────────────────────── */
-  .noticias-card {
-    background: var(--bg-card); box-shadow: var(--sombra);
-    border: 1px solid var(--linha); border-radius:24px;
-    padding:34px 52px; width:92%; max-width:1720px; color:var(--ink);
+  /* ── TICKER DE NOTÍCIAS: faixa única, contínua, sem rótulo ── */
+  #barra-ticker {
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    height:90px; display:flex; align-items:center;
+    background: var(--vidro-forte); backdrop-filter: blur(14px);
+    border-top:1px solid var(--borda-vidro);
   }
-  .noticias-eyebrow { font-size:.96em; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); font-weight:600; margin-bottom:18px; }
-  .noticias-grade { display:grid; grid-template-columns:1fr 1fr; gap:10px 40px; }
-  .noticia-item { display:flex; align-items:center; gap:16px; border-top:1px solid var(--linha); padding:11px 0; }
-  .noticias-grade .noticia-item:nth-child(1), .noticias-grade .noticia-item:nth-child(2) { border-top:none; padding-top:0; }
-  .noticia-tag {
-    display:inline-flex; align-items:center; gap:6px; font-size:.66em; font-weight:700;
-    letter-spacing:.08em; text-transform:uppercase; color:var(--vivo); margin-bottom:3px;
+  @keyframes pulso { 0%,100%{opacity:1} 50%{opacity:.25} }
+  #ticker-viewport { flex:1 1 auto; height:100%; overflow:hidden; position:relative; }
+  #ticker-trilho {
+    position:absolute; top:0; left:0; height:100%; display:flex; align-items:center;
+    white-space:nowrap; will-change:transform;
+    animation: rolar linear infinite;
   }
-  .noticia-tag .pt { width:6px; height:6px; border-radius:50%; background:var(--vivo); }
-  .noticia-img, .noticia-img-placeholder {
-    width:94px; height:66px; flex-shrink:0; border-radius:9px; object-fit:cover;
-    background:linear-gradient(135deg, var(--teal-suave), var(--amber-suave));
+  #ticker-trilho .item {
+    display:inline-flex; align-items:center; gap:16px;
+    padding:0 3em; flex-shrink:0;
   }
-  .noticia-img-placeholder { display:flex; align-items:center; justify-content:center; font-size:1.7em; }
-  .noticia-texto { font-size:1em; line-height:1.28; color:var(--ink); }
+  #ticker-trilho .item img {
+    width:120px; height:80px; border-radius:9px; object-fit:cover; flex-shrink:0;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  }
+  #ticker-trilho .item b {
+    color:#fff; font-size:1.02em; font-weight:500; opacity:.94; white-space:nowrap;
+  }
+  #ticker-trilho .sep { color:var(--amber); font-size:1.1em; flex-shrink:0; }
+  @keyframes rolar { from { transform:translateX(0); } to { transform:translateX(-50%); } }
 
-  .estado-vazio { color:var(--ink-soft); font-size:1.4em; text-align:center; }
+  .estado-vazio { color:rgba(255,255,255,.55); font-size:1.1em; }
 </style>
 </head>
 <body>
 
-  <!-- TV Brasil: carregada uma única vez, nunca recarrega -->
-  <div id="camada-tvbrasil">
-    <iframe id="iframe-tvbrasil" allow="autoplay"></iframe>
-    <div class="tvbrasil-badge"><span class="ponto"></span>TV Brasil <span class="mudo">· mudo</span></div>
+  <!-- PALCO: conteúdo cadastrado no banco de dados, sempre 100vw x 100vh -->
+  <div id="palco">
+    <div id="palco-a" class="camada-midia ativa"></div>
+    <div id="palco-b" class="camada-midia"></div>
   </div>
 
-  <!-- Cortina: cobre a TV Brasil quando outro conteúdo estiver passando -->
-  <div id="cortina">
+  <!-- Logo: solta, sem moldura/círculo -->
+  <div id="selo-marca" class="selo-solta">
+    <img src="logo-amar.png" onerror="this.classList.add('erro')">
+    <div class="txt"><span class="ponto-marca"></span>Centro <em>Médico</em> AMAR</div>
+  </div>
 
-    <div id="tela-empresa" class="tela">
-      <div class="ruido"></div>
-      <div class="tela-header">
-        <div class="marca">
-          <img src="logo-amar.png" onerror="this.classList.add('erro')">
-          <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
-        </div>
-        <div class="relogio" id="relogio1"></div>
-      </div>
-      <div class="tela-conteudo"><div id="conteudo-empresa"></div></div>
+  <!-- Selo da emissora: relógio + tempo (sutil, sempre visível) -->
+  <div id="selo-info" class="selo">
+    <div class="info-tempo" id="info-tempo"></div>
+    <div class="info-divisor"></div>
+    <div class="info-relogio">
+      <div class="hora" id="relogio"></div>
+      <div class="data" id="data-hoje"></div>
     </div>
+  </div>
 
-    <div id="tela-tempo" class="tela">
-      <div class="ruido"></div>
-      <div class="tela-header">
-        <div class="marca">
-          <img src="logo-amar.png" onerror="this.classList.add('erro')">
-          <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
-        </div>
-        <div class="relogio" id="relogio2"></div>
-      </div>
-      <div class="tela-conteudo"><div id="conteudo-tempo"></div></div>
+  <!-- Ticker de notícias: faixa única, contínua, no rodapé -->
+  <div id="barra-ticker">
+    <div id="ticker-viewport">
+      <div id="ticker-trilho"><span class="item"><b>Carregando notícias…</b></span></div>
     </div>
-
-    <div id="tela-noticias" class="tela">
-      <div class="ruido"></div>
-      <div class="tela-header">
-        <div class="marca">
-          <img src="logo-amar.png" onerror="this.classList.add('erro')">
-          <div class="txt"><span class="dot"></span>Centro <em>Médico</em> AMAR</div>
-        </div>
-        <div class="relogio" id="relogio3"></div>
-      </div>
-      <div class="tela-conteudo"><div id="conteudo-noticias"></div></div>
-    </div>
-
   </div>
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────
 const API = 'https://tv-amar.andrewmssantos.workers.dev';
-const TVBRASIL_URL = 'https://aovivo.ebc.com.br/embed-tvbrasil.html';
 
-// Cidades exibidas na tela de tempo. A primeira com destaque:true
-// ganha o card grande; as demais aparecem como cards compactos ao lado.
+// Cidades exibidas em rodízio no chip de tempo, no canto superior direito.
+// (Nenhuma preferência específica foi passada — usei Feira de Santana +
+// Salvador + duas cidades próximas como sugestão; é só trocar aqui.)
 const CIDADES = [
-  { nome:'Feira de Santana', uf:'BA', lat:-12.2667, lon:-38.9667, destaque:true },
-  { nome:'Salvador',         uf:'BA', lat:-12.9714, lon:-38.5014 },
-  { nome:'Camaçari',         uf:'BA', lat:-12.6997, lon:-38.3243 },
-  { nome:'Vitória da Conquista', uf:'BA', lat:-14.8619, lon:-40.8442 },
+  { nome:'Feira de Santana',        lat:-12.2667, lon:-38.9667 },
+  { nome:'Salvador',                lat:-12.9714, lon:-38.5014 },
+  { nome:'Alagoinhas',              lat:-12.1358, lon:-38.4192 },
+  { nome:'Santo Antônio de Jesus',  lat:-12.9528, lon:-39.2808 },
 ];
 
-// Fontes de notícias, em ordem de tentativa (a 1ª que responder, vence)
 const FONTES_NOTICIAS = [
   'https://www.acordacidade.com.br/feed/',
   'https://news.google.com/rss/search?q=Feira%20de%20Santana&hl=pt-BR&gl=BR&ceid=BR:pt-419',
 ];
-const QTD_NOTICIAS = 10; // quantidade de manchetes exibidas (TV grande, cabe bastante)
+const QTD_NOTICIAS_TICKER = 12;
 
-const DURACAO = {
-  tvbrasil: 5 * 1000,   // depois trocar pra 10*60*1000 (10min)
-  imagem:   5 * 1000,    // por slide de imagem
-  tempo:    14 * 1000,   // um pouco mais, agora com mais cidades pra ler
-  noticias: 16 * 1000,   // um pouco mais, agora com 10 manchetes pra ler
+const DURACAO_PADRAO = {
+  imagem:     10 * 1000,
+  comunicado: 14 * 1000,     // tempo de leitura do aviso na tela
+  video_max:  3 * 60 * 1000, // rede de segurança se o vídeo travar
+  // Obs.: a narração por voz do comunicado (o indicador "narrando
+  // comunicado" no HTML) ainda não está implementada — é só visual
+  // por enquanto. Se quiser, posso adicionar de verdade depois.
 };
 
-const ORDEM_TELAS = ['tvbrasil', 'empresa', 'tempo', 'noticias'];
-let idxTelaAtual = 0;
+const INTERVALO_RECHECAGEM_VAZIO   = 20 * 1000;        // quando não há nada cadastrado
+const INTERVALO_ATUALIZA_TEMPO     = 2  * 60 * 1000;   // busca nova temperatura das cidades
+const INTERVALO_ROTACAO_CIDADE     = 6  * 1000;        // troca a cidade exibida no chip
+const INTERVALO_ATUALIZA_TICKER    = 2  * 60 * 1000;   // busca notícias novas no feed
+
 let slidesEmpresa = [];
+let idxSlide = 0;
+let camadaAtual = 'a';
 let timerAtual = null;
 
-// ── RELÓGIO ───────────────────────────────────────────────────────
-function atualizarRelogio() {
-  const hora = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-  ['relogio1','relogio2','relogio3'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = hora;
-  });
-}
-setInterval(atualizarRelogio, 1000 * 10);
-atualizarRelogio();
-
-// ── CONTROLE DE TELAS ─────────────────────────────────────────────
-function limparAgendamento() {
-  if (timerAtual) { clearTimeout(timerAtual); timerAtual = null; }
-}
-
-// Alterna a TV Brasil entre tela cheia e PIP (pequena, no canto).
-// O iframe NUNCA é recarregado — só muda de tamanho/posição, sem soluços.
-// Obs.: como é conteúdo de outro domínio, o navegador não garante que o
-// mudo tenha efeito real (isso é uma limitação de segurança, não do código).
-function tvbrasilModoPIP(ativar) {
-  const camada = document.getElementById('camada-tvbrasil');
-  camada.classList.toggle('mini', ativar);
-  const iframe = document.getElementById('iframe-tvbrasil');
-  try { iframe.muted = ativar; } catch (e) {}
-}
-
-function mostrarTelaInterna(nome) {
-  document.querySelectorAll('#cortina .tela').forEach(t => t.classList.remove('ativa'));
-  const el = document.getElementById('tela-' + nome);
-  if (el) el.classList.add('ativa');
-}
-
-function avancar() {
-  idxTelaAtual = (idxTelaAtual + 1) % ORDEM_TELAS.length;
-  proximaTela();
-}
-
 function agendar(ms, fn) {
-  limparAgendamento();
+  if (timerAtual) clearTimeout(timerAtual);
   timerAtual = setTimeout(fn, ms);
 }
 
-async function proximaTela() {
-  const nome = ORDEM_TELAS[idxTelaAtual];
-  const cortina = document.getElementById('cortina');
-
-  if (nome === 'tvbrasil') {
-    // Só volta a TV Brasil pra tela cheia. O iframe nunca é tocado/recarregado.
-    tvbrasilModoPIP(false);
-    cortina.classList.remove('ativa');
-    agendar(DURACAO.tvbrasil, avancar);
-    return;
-  }
-
-  // Qualquer outra tela: TV Brasil encolhe para o canto (PIP),
-  // enquanto o conteúdo institucional ocupa a tela cheia por cima.
-  tvbrasilModoPIP(true);
-  cortina.classList.add('ativa');
-
-  if (nome === 'empresa') {
-    await rodarSlidesEmpresa();
-  }
-
-  if (nome === 'tempo') {
-    await carregarTempo();
-    mostrarTelaInterna('tempo');
-    agendar(DURACAO.tempo, avancar);
-  }
-
-  if (nome === 'noticias') {
-    await carregarNoticias();
-    mostrarTelaInterna('noticias');
-    agendar(DURACAO.noticias, avancar);
-  }
+// ── RELÓGIO ───────────────────────────────────────────────────────
+function atualizarRelogio() {
+  const agora = new Date();
+  document.getElementById('relogio').textContent =
+    agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  document.getElementById('data-hoje').textContent =
+    agora.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
 }
+setInterval(atualizarRelogio, 1000 * 15);
+atualizarRelogio();
 
-// ── SLIDES DA EMPRESA ─────────────────────────────────────────────
+// ── CONTEÚDO DA EMPRESA (banco de dados) ───────────────────────────
 async function carregarSlidesEmpresa() {
   try {
     const r = await fetch(`${API}/tv_propaganda`);
     const todos = await r.json();
     const hoje = new Date().toISOString().slice(0, 10);
-    slidesEmpresa = todos.filter(it => {
+    return todos.filter(it => {
       if (it.data_inicio && it.data_inicio > hoje) return false;
       if (it.data_final && it.data_final < hoje) return false;
       return true;
     });
   } catch (e) {
-    slidesEmpresa = [];
+    return [];
   }
 }
 
-async function rodarSlidesEmpresa() {
-  await carregarSlidesEmpresa();
-  const el = document.getElementById('conteudo-empresa');
-  mostrarTelaInterna('empresa');
+function construirMidiaHTML(it) {
+  if (it.tipo === 'video') {
+    return `<div class="midia-full"><video src="${it.url}" autoplay playsinline></video></div>`;
+  }
+  if (it.tipo === 'comunicado') {
+    return `<div class="comunicado-bg"><div class="comunicado-card">
+      <div class="comunicado-icone">
+        <div class="anel-pulso"></div>
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M50 12c-4 0-7 3-7 7v3c-11 3-19 13-19 25v18l-8 10h68l-8-10V47c0-12-8-22-19-25v-3c0-4-3-7-7-7z"/>
+          <path d="M40 82a10 10 0 0 0 20 0"/>
+        </svg>
+      </div>
+      <div class="comunicado-corpo">
+        <div class="comunicado-eyebrow"><span class="ponto-vivo-com"></span>Aviso Oficial</div>
+        <div class="titulo">${it.nome || ''}</div>
+        <div class="desc">${it.descricao || ''}</div>
+        <div class="comunicado-audio" id="comunicado-audio-indicador">
+          <span class="barra"></span><span class="barra"></span><span class="barra"></span><span class="barra"></span>
+          narrando comunicado
+        </div>
+      </div>
+    </div></div>`;
+  }
+  return `<div class="midia-full"><img src="${it.url}" alt=""></div>`;
+}
+
+function mostrarProximaCamada(html) {
+  const proxima = camadaAtual === 'a' ? 'b' : 'a';
+  const elAtual = document.getElementById('palco-' + camadaAtual);
+  const elProxima = document.getElementById('palco-' + proxima);
+  elProxima.innerHTML = html;
+  void elProxima.offsetWidth; // força reflow pra transição funcionar
+  elProxima.classList.add('ativa');
+  elAtual.classList.remove('ativa');
+  const antiga = elAtual;
+  camadaAtual = proxima;
+  setTimeout(() => { antiga.innerHTML = ''; }, 950);
+  return elProxima;
+}
+
+function mostrarOcioso() {
+  const html = `<div class="estado-ocioso">
+      <img class="logo-grande" src="logo-amar.png" onerror="this.classList.add('erro')">
+      <div class="marca-texto">Centro <em>Médico</em> AMAR</div>
+      <div class="tagline">Cuidando de você com excelência</div>
+    </div>`;
+  mostrarProximaCamada(html);
+}
+
+async function cicloConteudo() {
+  // ao voltar pro início da lista, busca de novo — assim conteúdo novo
+  // cadastrado no banco entra automaticamente, sem precisar recarregar a página.
+  if (idxSlide === 0) {
+    slidesEmpresa = await carregarSlidesEmpresa();
+  }
 
   if (!slidesEmpresa.length) {
-    el.innerHTML = '<div class="estado-vazio">Nenhum conteúdo cadastrado no momento.</div>';
-    agendar(3000, avancar);
+    mostrarOcioso();
+    agendar(INTERVALO_RECHECAGEM_VAZIO, cicloConteudo);
     return;
   }
 
-  let i = 0;
-  const mostrarSlide = () => {
-    const it = slidesEmpresa[i];
+  const it = slidesEmpresa[idxSlide];
+  const elCamada = mostrarProximaCamada(construirMidiaHTML(it));
 
-    if (it.tipo === 'video') {
-      el.innerHTML = `<div class="midia-full"><video src="${it.url}" autoplay muted playsinline></video></div>`;
-      const video = el.querySelector('video');
-      // avança quando o vídeo terminar (duração = duração do próprio vídeo)
-      video.addEventListener('ended', proximoSlideOuTela, { once:true });
-      // rede de segurança, caso o vídeo falhe/trave: 3min max
-      agendar(3 * 60 * 1000, proximoSlideOuTela);
-
-    } else if (it.tipo === 'comunicado') {
-      el.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div class="comunicado-card">
-        <div class="titulo">${it.nome}</div><div class="desc">${it.descricao || ''}</div></div></div>`;
-      agendar(DURACAO.imagem, proximoSlideOuTela);
-
-    } else {
-      el.innerHTML = `<div class="midia-full"><img src="${it.url}" alt=""></div>`;
-      agendar(DURACAO.imagem, proximoSlideOuTela);
-    }
+  const avancarIndice = () => {
+    idxSlide = (idxSlide + 1) % slidesEmpresa.length;
+    cicloConteudo();
   };
 
-  function proximoSlideOuTela() {
-    i++;
-    if (i < slidesEmpresa.length) {
-      mostrarSlide();
-    } else {
-      avancar();
+  if (it.tipo === 'video') {
+    const video = elCamada.querySelector('video');
+    if (video) {
+      video.addEventListener('ended', avancarIndice, { once:true });
+      // Tenta tocar com som; se o navegador bloquear autoplay com áudio
+      // (política padrão sem interação do usuário), cai pra mudo pra
+      // não travar a TV — mas registra o aviso pra facilitar o diagnóstico.
+      const tentativa = video.play();
+      if (tentativa && tentativa.catch) {
+        tentativa.catch(() => {
+          console.warn('Autoplay com som bloqueado pelo navegador — tocando mudo:', it.url);
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      }
     }
+    agendar(DURACAO_PADRAO.video_max, avancarIndice);
+  } else if (it.tipo === 'comunicado') {
+    agendar(DURACAO_PADRAO.comunicado, avancarIndice);
+  } else {
+    agendar(DURACAO_PADRAO.imagem, avancarIndice);
   }
-
-  mostrarSlide();
 }
 
-// ── TEMPO (Open-Meteo, múltiplas cidades) ──────────────────────────
-const DESC_TEMPO = {
-  0:'Céu limpo',1:'Poucas nuvens',2:'Parcialmente nublado',3:'Nublado',
-  45:'Neblina',48:'Neblina com geada',
-  51:'Garoa fraca',53:'Garoa',55:'Garoa forte',56:'Garoa gelada',57:'Garoa gelada forte',
-  61:'Chuva fraca',63:'Chuva',65:'Chuva forte',66:'Chuva gelada',67:'Chuva gelada forte',
-  71:'Neve fraca',73:'Neve',75:'Neve forte',77:'Grãos de neve',
-  80:'Pancadas de chuva',81:'Pancadas de chuva',82:'Pancadas fortes',
-  85:'Pancadas de neve',86:'Pancadas de neve fortes',
-  95:'Tempestade',96:'Tempestade com granizo',99:'Tempestade forte',
-};
-
-// Agrupa os códigos do Open-Meteo em "famílias" visuais
-function familiaTempo(codigo) {
+// ── TEMPO (chip discreto, canto superior direito) ──────────────────
+const DESC_TEMPO_FAMILIA = codigo => {
   if ([0,1].includes(codigo)) return 'sol';
   if ([2,3].includes(codigo)) return 'nublado';
   if ([45,48].includes(codigo)) return 'neblina';
   if ([71,73,75,77,85,86].includes(codigo)) return 'neve';
   if ([95,96,99].includes(codigo)) return 'tempestade';
-  return 'chuva'; // 51-67, 80-82
-}
+  return 'chuva';
+};
 
-// Gera o SVG animado de acordo com a família do clima, com cores pensadas
-// para cards BRANCOS (fundo claro) — precisa de contraste, nada de branco no branco.
-function iconeTempoSVG(codigo, { dia = true, animado = true } = {}) {
-  const fam = familiaTempo(codigo);
-  const a = animado ? '' : 'style="animation:none"';
-  const nuvem = (cor='#B9C7CE', y=0) => `<g class="w-nuvem" ${a}>
-      <ellipse cx="42" cy="${58+y}" rx="20" ry="14" fill="${cor}"/>
-      <ellipse cx="58" cy="${52+y}" rx="24" ry="17" fill="${cor}"/>
-      <ellipse cx="76" cy="${60+y}" rx="18" ry="13" fill="${cor}"/>
-    </g>`;
-  const gotas = (n=3, cor='#2E86C7') => Array.from({length:n}).map((_,i) =>
-      `<rect class="w-gota" ${a} x="${38+i*16}" y="76" width="4" height="12" rx="2" fill="${cor}" style="animation-delay:${i*0.22}s"/>`
-    ).join('');
-  const flocos = (n=4) => Array.from({length:n}).map((_,i) =>
-      `<circle class="w-floco" ${a} cx="${36+i*13}" cy="78" r="3" fill="#8FAEC2" style="animation-delay:${i*0.3}s"/>`
-    ).join('');
-  const bruma = () => [0,1,2].map(i =>
-      `<rect class="w-bruma" ${a} x="26" y="${70+i*9}" width="48" height="4" rx="2" fill="#AEBBC2" opacity=".8" style="animation-delay:${i*0.4}s"/>`
-    ).join('');
-
+function iconeTempoMiniSVG(codigo, dia) {
+  const fam = DESC_TEMPO_FAMILIA(codigo);
   if (fam === 'sol') {
-    if (dia) {
-      return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <g class="w-raios" ${a}>
-          ${[0,45,90,135,180,225,270,315].map(ang => `<rect x="47" y="6" width="6" height="14" rx="3" fill="#D99A2B" transform="rotate(${ang} 50 50)"/>`).join('')}
-        </g>
-        <circle cx="50" cy="50" r="23" fill="#E8AC3B"/>
-        <circle cx="50" cy="50" r="23" fill="none" stroke="#B07A2E" stroke-width="2" opacity=".5"/>
-      </svg>`;
-    }
-    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      ${[[18,20],[80,16],[70,34],[24,42]].map((p,i) => `<circle class="w-estrela" ${a} cx="${p[0]}" cy="${p[1]}" r="2.4" fill="#8A7BB5" style="animation-delay:${i*0.4}s"/>`).join('')}
-      <path d="M62 28a24 24 0 1 0 20 30 19 19 0 0 1-20-30z" fill="#6B5B95"/>
-    </svg>`;
+    if (dia) return `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="24" fill="#F0B93E"/></svg>`;
+    return `<svg viewBox="0 0 100 100"><path d="M62 28a24 24 0 1 0 20 30 19 19 0 0 1-20-30z" fill="#B7A8E0"/></svg>`;
   }
-  if (fam === 'nublado') {
-    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      ${!dia ? '' : `<circle cx="30" cy="34" r="12" fill="#E8AC3B" opacity=".9"/>`}
-      ${nuvem('#B9C7CE', 6)}
-    </svg>`;
-  }
-  if (fam === 'neblina') {
-    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      ${nuvem('#C3CFD5', -8)}
-      ${bruma()}
-    </svg>`;
-  }
-  if (fam === 'neve') {
-    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      ${nuvem('#C3CFD5', 0)}
-      ${flocos()}
-    </svg>`;
-  }
-  if (fam === 'tempestade') {
-    return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      ${nuvem('#8CA0AC', 0)}
-      <polygon class="w-flash" ${a} points="54,58 42,80 50,80 46,96 66,72 56,72" fill="#D99A2B"/>
-      ${gotas(2, '#2E86C7')}
-    </svg>`;
-  }
-  // chuva (padrão)
-  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    ${nuvem('#B9C7CE', 0)}
-    ${gotas(3)}
-  </svg>`;
+  if (fam === 'nublado') return `<svg viewBox="0 0 100 100">
+    <ellipse cx="42" cy="58" rx="20" ry="14" fill="#D4DEE3"/><ellipse cx="58" cy="52" rx="24" ry="17" fill="#D4DEE3"/><ellipse cx="76" cy="60" rx="18" ry="13" fill="#D4DEE3"/></svg>`;
+  if (fam === 'neblina') return `<svg viewBox="0 0 100 100">
+    <ellipse cx="50" cy="50" rx="30" ry="18" fill="#C9D4D9" opacity=".8"/></svg>`;
+  if (fam === 'neve') return `<svg viewBox="0 0 100 100">
+    <ellipse cx="50" cy="50" rx="26" ry="16" fill="#D4DEE3"/><circle cx="40" cy="78" r="3" fill="#AFC4D2"/><circle cx="60" cy="78" r="3" fill="#AFC4D2"/></svg>`;
+  if (fam === 'tempestade') return `<svg viewBox="0 0 100 100">
+    <ellipse cx="50" cy="46" rx="26" ry="16" fill="#9FB1BC"/><polygon points="54,58 42,80 50,80 46,96 66,72 56,72" fill="#F0B93E"/></svg>`;
+  return `<svg viewBox="0 0 100 100">
+    <ellipse cx="50" cy="46" rx="26" ry="16" fill="#D4DEE3"/><rect x="38" y="70" width="4" height="12" rx="2" fill="#5AA6E0"/><rect x="58" y="70" width="4" height="12" rx="2" fill="#5AA6E0"/></svg>`;
 }
 
-function faixaUV(uv) {
-  if (uv < 3) return { label:'Baixo', classe:'uv-baixo' };
-  if (uv < 6) return { label:'Moderado', classe:'uv-moderado' };
-  if (uv < 8) return { label:'Alto', classe:'uv-alto' };
-  if (uv < 11) return { label:'Muito alto', classe:'uv-muito-alto' };
-  return { label:'Extremo', classe:'uv-extremo' };
-}
+let dadosTempoCidades = []; // cache: tempo atual de cada cidade da lista CIDADES
+let idxCidadeExibida = 0;
 
-async function buscarPrevisao(cidade) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${cidade.lat}&longitude=${cidade.lon}` +
-    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day,precipitation` +
-    `&hourly=temperature_2m,weather_code,precipitation_probability` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max` +
-    `&timezone=America%2FSao_Paulo&forecast_days=5`;
-  const r = await fetch(url);
-  return r.json();
-}
-
-function renderTempoDestaque(d, cidade) {
-  const c = d.current;
-  const ehDia = c.is_day === 1;
-  const desc = DESC_TEMPO[c.weather_code] || '';
-
-  const horaFmt = iso => new Date(iso).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-  const nascer = horaFmt(d.daily.sunrise[0]);
-  const poe = horaFmt(d.daily.sunset[0]);
-  const uv = faixaUV(Math.round(d.daily.uv_index_max[0]));
-
-  let idxAgora = d.hourly.time.findIndex(t => t === c.time);
-  if (idxAgora === -1) idxAgora = 0;
-  const horas = d.hourly.time.slice(idxAgora + 1, idxAgora + 6).map((t, i) => {
-    const hora = new Date(t).toLocaleTimeString('pt-BR', { hour:'2-digit' }).replace(/^0/, '');
-    const codigo = d.hourly.weather_code[idxAgora + 1 + i];
-    const temp = Math.round(d.hourly.temperature_2m[idxAgora + 1 + i]);
-    const pp = d.hourly.precipitation_probability[idxAgora + 1 + i];
-    return `<div class="tempo-hora">
-      <div class="h">${hora}h</div>
-      <div class="ic-mini">${iconeTempoSVG(codigo, { dia:true })}</div>
-      <div><b>${temp}°</b></div>
-      ${pp > 15 ? `<div class="pp">💧${pp}%</div>` : ''}
-    </div>`;
-  }).join('');
-
-  const dias = d.daily.time.slice(1, 5).map((data, idx) => {
-    const nomeDia = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'short' });
-    const codigo = d.daily.weather_code[idx+1];
-    return `<div class="tempo-dia">
-      <div class="d">${nomeDia}</div>
-      <div class="ic-mini">${iconeTempoSVG(codigo, { dia:true })}</div>
-      <div>${Math.round(d.daily.temperature_2m_max[idx+1])}° / ${Math.round(d.daily.temperature_2m_min[idx+1])}°</div>
-    </div>`;
-  }).join('');
-
-  return `
-    <div class="tempo-card">
-      <div class="tempo-eyebrow">Previsão do tempo</div>
-      <div class="tempo-cidade">${cidade.nome}, ${cidade.uf}</div>
-      <div class="tempo-main">
-        <div class="tempo-ic-wrap">${iconeTempoSVG(c.weather_code, { dia: ehDia })}</div>
-        <div class="tempo-graus-wrap">
-          <div class="tempo-graus">${Math.round(c.temperature_2m)}°</div>
-          <div class="tempo-desc">${desc}</div>
-        </div>
-      </div>
-      <div class="tempo-meta">
-        <div>Sensação<b>${Math.round(c.apparent_temperature)}°</b></div>
-        <div>Umidade<b>${c.relative_humidity_2m}%</b></div>
-        <div>Vento<b>${Math.round(c.wind_speed_10m)} km/h</b></div>
-        <div class="${uv.classe}">Índice UV<b>${uv.label}</b></div>
-        <div>Nascer/Pôr<b>${nascer} · ${poe}</b></div>
-      </div>
-      <div class="tempo-hoje">${horas}</div>
-      <div class="tempo-previsao">${dias}</div>
-    </div>`;
-}
-
-function renderTempoMini(d, cidade) {
-  const c = d.current;
-  const ehDia = c.is_day === 1;
-  const desc = DESC_TEMPO[c.weather_code] || '';
-  const max = Math.round(d.daily.temperature_2m_max[0]);
-  const min = Math.round(d.daily.temperature_2m_min[0]);
-  return `
-    <div class="tempo-mini">
-      <div class="ic-mini">${iconeTempoSVG(c.weather_code, { dia: ehDia })}</div>
-      <div class="info">
-        <div class="cidade">${cidade.nome} <span class="uf">${cidade.uf}</span></div>
-        <div class="desc">${desc}</div>
-        <div class="minmax">Máx ${max}° · Mín ${min}°</div>
-      </div>
-      <div class="graus">${Math.round(c.temperature_2m)}°</div>
-    </div>`;
-}
-
-async function carregarTempo() {
-  const el = document.getElementById('conteudo-tempo');
+async function atualizarTempoCidades() {
   try {
-    const resultados = await Promise.all(CIDADES.map(async cidade => {
-      try { return { cidade, dados: await buscarPrevisao(cidade) }; }
-      catch (e) { return { cidade, dados:null }; }
+    dadosTempoCidades = await Promise.all(CIDADES.map(async cidade => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${cidade.lat}&longitude=${cidade.lon}` +
+        `&current=temperature_2m,weather_code,is_day&timezone=America%2FSao_Paulo`;
+      const r = await fetch(url);
+      const d = await r.json();
+      return { nome: cidade.nome, ...d.current };
     }));
-
-    const principal = resultados.find(r => r.cidade.destaque) || resultados[0];
-    const outras = resultados.filter(r => r !== principal);
-
-    if (!principal || !principal.dados) throw new Error('sem dados');
-
-    const htmlOutras = outras
-      .filter(r => r.dados)
-      .map(r => renderTempoMini(r.dados, r.cidade))
-      .join('');
-
-    el.innerHTML = `
-      <div class="tempo-wrap">
-        ${renderTempoDestaque(principal.dados, principal.cidade)}
-        <div class="tempo-outras">${htmlOutras}</div>
-      </div>`;
   } catch (e) {
-    el.innerHTML = '<div class="estado-vazio">Previsão do tempo indisponível no momento.</div>';
+    dadosTempoCidades = [];
   }
+  renderizarTempoChip();
 }
 
-// ── NOTÍCIAS (tenta Acorda Cidade, cai pro Google Notícias) ───────
+function renderizarTempoChip() {
+  const el = document.getElementById('info-tempo');
+  if (!dadosTempoCidades.length) {
+    el.innerHTML = `<div class="txt-tempo"><div class="cidade">Tempo indisponível</div></div>`;
+    return;
+  }
+  const c = dadosTempoCidades[idxCidadeExibida % dadosTempoCidades.length];
+  el.innerHTML = `
+    <div class="ic">${iconeTempoMiniSVG(c.weather_code, c.is_day === 1)}</div>
+    <div class="txt-tempo">
+      <div class="graus">${Math.round(c.temperature_2m)}°</div>
+      <div class="cidade">${c.nome}</div>
+    </div>`;
+}
+
+function rotacionarCidade() {
+  if (!dadosTempoCidades.length) return;
+  idxCidadeExibida = (idxCidadeExibida + 1) % dadosTempoCidades.length;
+  renderizarTempoChip();
+}
+
+// ── NOTÍCIAS (ticker contínuo e discreto) ──────────────────────────
 const PROXIES_NOTICIAS = [
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
 ];
+
+function extrairImagemItem(item) {
+  const enclosure = item.querySelector('enclosure[url]');
+  if (enclosure) return enclosure.getAttribute('url');
+  const media = item.getElementsByTagName('media:content')[0] || item.getElementsByTagName('media:thumbnail')[0];
+  if (media) return media.getAttribute('url') || '';
+  return '';
+}
 
 async function buscarFeedComFallback() {
   for (const feedUrl of FONTES_NOTICIAS) {
@@ -686,60 +493,49 @@ async function buscarFeedComFallback() {
   return [];
 }
 
-// Tenta achar a imagem de capa da notícia em vários lugares possíveis do RSS:
-// media:content, media:thumbnail, enclosure e, por fim, a 1ª <img> dentro da descrição/conteúdo.
-function extrairImagemNoticia(item) {
-  const porTag = seletor => {
-    const els = item.querySelectorAll(seletor);
-    for (const el of els) {
-      const url = el.getAttribute('url');
-      if (url) return url;
-    }
-    return null;
-  };
-  let url = porTag('media\\:content, content')
-    || porTag('media\\:thumbnail, thumbnail')
-    || porTag('enclosure');
-  if (url) return url;
-
-  try {
-    const bruto = new XMLSerializer().serializeToString(item);
-    const m = bruto.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (m) return m[1].replace(/&amp;/g, '&');
-  } catch (e) { /* ignora */ }
-  return null;
+function montarItemTicker(titulo, imagem) {
+  const img = imagem
+    ? `<img src="${imagem}" alt="" onerror="this.remove()">`
+    : '';
+  return `<span class="item">${img}<b>${titulo}</b></span><span class="sep">•</span>`;
 }
 
-async function carregarNoticias() {
-  const el = document.getElementById('conteudo-noticias');
+async function atualizarTicker() {
+  const trilho = document.getElementById('ticker-trilho');
   try {
-    const items = (await buscarFeedComFallback()).slice(0, QTD_NOTICIAS);
+    const items = (await buscarFeedComFallback()).slice(0, QTD_NOTICIAS_TICKER);
     if (!items.length) throw new Error('vazio');
 
-    const html = items.map((it, i) => {
-      let titulo = it.querySelector('title')?.textContent || '';
-      titulo = titulo.replace(/\s-\s[^-]+$/, ''); // remove " - Nome do veículo" do fim (Google Notícias)
-      const img = extrairImagemNoticia(it);
-      const midia = img
-        ? `<img class="noticia-img" src="${img}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;noticia-img-placeholder&quot;>📰</div>'">`
-        : `<div class="noticia-img-placeholder">📰</div>`;
-      const tag = i === 0 ? `<div class="noticia-tag"><span class="pt"></span>Mais recente</div>` : '';
-      return `<div class="noticia-item">${midia}<div class="noticia-texto">${tag}${titulo}</div></div>`;
-    }).join('');
+    const noticias = items.map(it => {
+      let t = it.querySelector('title')?.textContent || '';
+      t = t.replace(/\s-\s[^-]+$/, '');
+      return { titulo: t, imagem: extrairImagemItem(it) };
+    });
 
-    el.innerHTML = `
-      <div class="noticias-card">
-        <div class="noticias-eyebrow">Notícias · Feira de Santana e região</div>
-        <div class="noticias-grade">${html}</div>
-      </div>`;
+    // duplica a lista pra permitir loop contínuo e sem costura no CSS —
+    // cada notícia entra como um único bloco (miniatura + título) que
+    // desliza pra fora enquanto a próxima já vem entrando ao lado.
+    const conteudo = noticias.concat(noticias)
+      .map(n => montarItemTicker(n.titulo, n.imagem))
+      .join('');
+    trilho.innerHTML = conteudo;
+
+    // velocidade proporcional ao tamanho do conteúdo, pra manter leitura confortável
+    const largura = trilho.scrollWidth / 2;
+    const duracao = Math.max(40, largura / 55); // ~55px por segundo
+    trilho.style.animationDuration = duracao + 's';
   } catch (e) {
-    el.innerHTML = '<div class="estado-vazio">Notícias indisponíveis no momento.</div>';
+    trilho.innerHTML = `<span class="item estado-vazio"><b>Notícias indisponíveis no momento.</b></span>`;
   }
 }
 
 // ── START ─────────────────────────────────────────────────────────
-document.getElementById('iframe-tvbrasil').src = TVBRASIL_URL;
-proximaTela();
+cicloConteudo();
+atualizarTempoCidades();
+setInterval(atualizarTempoCidades, INTERVALO_ATUALIZA_TEMPO);
+setInterval(rotacionarCidade, INTERVALO_ROTACAO_CIDADE);
+atualizarTicker();
+setInterval(atualizarTicker, INTERVALO_ATUALIZA_TICKER);
 </script>
 </body>
 </html>
