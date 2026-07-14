@@ -411,6 +411,69 @@ function agendar(ms, fn) {
   timerAtual = setTimeout(fn, ms);
 }
 
+// ── CACHE LOCAL DE MÍDIA (vídeos/imagens) ───────────────────────────
+// Guarda cada vídeo/imagem no Cache Storage do navegador (persiste
+// mesmo depois da TV reiniciar) e mantém um mapa em memória com a URL
+// local (blob:) já pronta pra tocar sem depender da rede. Optei por
+// baixar o arquivo inteiro via Cache Storage em vez de um Service
+// Worker interceptando as requisições do <video> — porque vídeo usa
+// "range requests" (pedaços do arquivo) pra bufferizar, e isso complica
+// bastante o cache dentro de um Service Worker. Baixando o arquivo
+// completo de antemão, a troca de vídeo fica instantânea e sem esse
+// problema.
+const CACHE_MIDIA_NOME = 'tv-amar-midia-v1';
+const cacheMidiaEmMemoria = new Map(); // url original -> URL local (blob:) já pronta
+const cacheMidiaEmAndamento = new Set(); // evita baixar a mesma URL 2x em paralelo
+
+async function prepararMidiaEmCache(url) {
+  if (!url || cacheMidiaEmMemoria.has(url) || cacheMidiaEmAndamento.has(url)) return;
+  if (!('caches' in window)) return; // navegador sem suporte: segue direto pela rede, sem cache
+
+  cacheMidiaEmAndamento.add(url);
+  try {
+    const cache = await caches.open(CACHE_MIDIA_NOME);
+    let resposta = await cache.match(url);
+    if (!resposta) {
+      resposta = await fetch(url);
+      if (resposta && resposta.ok) {
+        await cache.put(url, resposta.clone());
+      }
+    }
+    if (resposta && resposta.ok) {
+      const blob = await resposta.blob();
+      cacheMidiaEmMemoria.set(url, URL.createObjectURL(blob));
+    }
+  } catch (e) {
+    console.warn('Não foi possível cachear esta mídia localmente, seguindo direto da rede:', url, e);
+  } finally {
+    cacheMidiaEmAndamento.delete(url);
+  }
+}
+
+// URL pronta pra usar no <video>/<img>: a cópia local (blob:) se já
+// estiver em cache, senão a URL original — nunca espera o cache pra
+// não travar a exibição.
+function urlParaExibicao(url) {
+  return cacheMidiaEmMemoria.get(url) || url;
+}
+
+// Remove do cache local qualquer mídia que não esteja mais na lista
+// atual (ex.: vídeo removido/trocado no banco) — evita que o cache
+// cresça sem limite ao longo dos dias, o que importa numa TV com pouco
+// espaço em disco.
+async function limparCacheDesatualizado(urlsAtuais) {
+  if (!('caches' in window)) return;
+  try {
+    const cache = await caches.open(CACHE_MIDIA_NOME);
+    const chaves = await cache.keys();
+    await Promise.all(chaves.map(req => {
+      if (!urlsAtuais.has(req.url)) return cache.delete(req);
+    }));
+  } catch (e) {
+    console.warn('Falha ao limpar cache antigo de mídia:', e);
+  }
+}
+
 // ── RELÓGIO ───────────────────────────────────────────────────────
 function atualizarRelogio() {
   const agora = new Date();
@@ -428,11 +491,18 @@ async function carregarSlidesEmpresa() {
     const r = await fetch(`${API}/tv_propaganda`);
     const todos = await r.json();
     const hoje = new Date().toISOString().slice(0, 10);
-    return todos.filter(it => {
+    const validos = todos.filter(it => {
       if (it.data_inicio && it.data_inicio > hoje) return false;
       if (it.data_final && it.data_final < hoje) return false;
       return true;
     });
+
+    // limpa do cache local qualquer vídeo/imagem que não está mais
+    // na lista válida (não bloqueia a exibição, roda em segundo plano)
+    const urlsValidas = new Set(validos.filter(it => it.tipo !== 'comunicado').map(it => it.url));
+    limparCacheDesatualizado(urlsValidas);
+
+    return validos;
   } catch (e) {
     return [];
   }
@@ -440,7 +510,7 @@ async function carregarSlidesEmpresa() {
 
 function construirMidiaHTML(it) {
   if (it.tipo === 'video') {
-    return `<div class="midia-full"><video src="${it.url}" autoplay playsinline></video></div>`;
+    return `<div class="midia-full"><video src="${urlParaExibicao(it.url)}" autoplay playsinline preload="auto"></video></div>`;
   }
   if (it.tipo === 'comunicado') {
     return `<div class="comunicado-bg"><div class="comunicado-card">
@@ -462,7 +532,7 @@ function construirMidiaHTML(it) {
       </div>
     </div></div>`;
   }
-  return `<div class="midia-full"><img src="${it.url}" alt=""></div>`;
+  return `<div class="midia-full"><img src="${urlParaExibicao(it.url)}" alt=""></div>`;
 }
 
 function mostrarProximaCamada(html) {
@@ -503,6 +573,15 @@ async function cicloConteudo() {
 
   const it = slidesEmpresa[idxSlide];
   const elCamada = mostrarProximaCamada(construirMidiaHTML(it));
+
+  // Enquanto o item atual está na tela, já dispara o download/cache do
+  // PRÓXIMO item em segundo plano. Quando chegar a vez dele, a troca
+  // usa a cópia local (instantânea) em vez de esperar a rede — é isso
+  // que elimina a travadinha entre um vídeo e outro.
+  const proximoItem = slidesEmpresa[(idxSlide + 1) % slidesEmpresa.length];
+  if (proximoItem && proximoItem.tipo !== 'comunicado') {
+    prepararMidiaEmCache(proximoItem.url);
+  }
 
   const avancarIndice = () => {
     idxSlide = (idxSlide + 1) % slidesEmpresa.length;
