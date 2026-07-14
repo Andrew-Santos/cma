@@ -10,28 +10,41 @@
 <style>
   :root {
     --teal:        #10B3A0;
+    --teal-claro:  #4FD8C4;
     --amber:       #E8AC3B;
     --vivo:        #E8544A;
-    --vidro:       rgba(10,16,18,.42);
-    --vidro-forte: rgba(8,12,14,.62);
-    --borda-vidro: rgba(255,255,255,.14);
+    --vidro:       rgba(8,13,16,.48);
+    --vidro-forte: rgba(6,10,12,.68);
+    --borda-vidro: rgba(255,255,255,.16);
+    --brilho-vidro: inset 0 1px 0 rgba(255,255,255,.09);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body {
     width:100vw; height:100vh; overflow:hidden;
-    font-family:'Outfit', sans-serif; background:#05070a;
+    font-family:'Outfit', sans-serif; background:#04060A;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
 
   /* ── PALCO: onde o conteúdo do banco de dados passa, 100vw x 100vh ── */
-  #palco { position:fixed; inset:0; width:100vw; height:100vh; background:#05070a; }
+  #palco { position:fixed; inset:0; width:100vw; height:100vh; background:#04060A; overflow:hidden; }
   .camada-midia {
     position:absolute; inset:0; width:100%; height:100%;
-    opacity:0; transition:opacity .9s ease;
+    opacity:0; transition:opacity 1.1s ease;
   }
   .camada-midia.ativa { opacity:1; z-index:2; }
-  .midia-full { position:absolute; inset:0; width:100%; height:100%; background:#000; }
+  .midia-full { position:absolute; inset:0; width:100%; height:100%; background:#000; overflow:hidden; }
   .midia-full img, .midia-full video {
     width:100%; height:100%; object-fit:cover; display:block;
+    transform-origin:center center;
+  }
+  /* Zoom lento e contínuo (estilo broadcast) — só em imagens estáticas.
+     Em vídeo fica estranho, porque o vídeo já tem movimento próprio. */
+  .midia-full img {
+    animation: zoom-lento 16s ease-out forwards;
+  }
+  @keyframes zoom-lento {
+    from { transform:scale(1);    }
+    to   { transform:scale(1.09); }
   }
   /* leve escurecida nas bordas pra logo/relógio/ticker sempre legíveis, em qualquer imagem */
   .midia-full::after {
@@ -50,12 +63,12 @@
     display:flex; align-items:center; justify-content:center;
   }
   .comunicado-card {
-    background: rgba(255,255,255,.06);
-    backdrop-filter: blur(18px);
-    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.055);
+    backdrop-filter: blur(22px) saturate(1.3);
+    border: 1px solid var(--borda-vidro);
     border-radius:28px;
     padding:64px 90px; max-width:80%;
-    box-shadow: 0 30px 70px -30px rgba(0,0,0,.6);
+    box-shadow: 0 30px 70px -30px rgba(0,0,0,.65), var(--brilho-vidro);
     display:flex; align-items:center; gap:52px;
   }
   .comunicado-icone {
@@ -87,7 +100,7 @@
   }
   .comunicado-card .titulo {
     font-family:'Cormorant Garamond', serif; font-size:3.2em; font-weight:600;
-    color:#fff; margin-bottom:16px; letter-spacing:.2px; line-height:1.1;
+    color:#fff; margin-bottom:16px; letter-spacing:-.01em; line-height:1.1;
   }
   .comunicado-card .desc { font-size:1.28em; color:rgba(255,255,255,.78); line-height:1.45; }
   .comunicado-audio {
@@ -127,9 +140,9 @@
   .selo {
     position:fixed; top:26px; z-index:30;
     display:flex; align-items:center; gap:12px;
-    background: var(--vidro); backdrop-filter: blur(14px);
+    background: var(--vidro); backdrop-filter: blur(18px) saturate(1.3);
     border:1px solid var(--borda-vidro); border-radius:100px;
-    box-shadow: 0 14px 34px -16px rgba(0,0,0,.5);
+    box-shadow: 0 14px 34px -16px rgba(0,0,0,.55), var(--brilho-vidro);
     color:#fff;
   }
 
@@ -156,23 +169,38 @@
   #selo-info { right:30px; padding:10px 26px; gap:20px; }
   .info-relogio { text-align:right; line-height:1.1; }
   .info-relogio .hora {
-    font-size:1.55em; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.01em;
+    font-size:1.6em; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:-.01em;
   }
-  .info-relogio .data { font-size:.72em; color:rgba(255,255,255,.6); text-transform:capitalize; letter-spacing:.02em; }
-  .info-divisor { width:1px; height:32px; background:rgba(255,255,255,.2); }
-  .info-tempo { display:flex; align-items:center; gap:10px; transition: opacity .25s ease; }
-  .info-tempo .ic { width:34px; height:34px; flex-shrink:0; }
+  .info-relogio .data { font-size:.72em; color:rgba(255,255,255,.6); text-transform:capitalize; letter-spacing:.03em; font-weight:300; }
+  .info-divisor { width:1px; height:32px; background:rgba(255,255,255,.16); }
+  .info-tempo { display:flex; align-items:center; gap:11px; transition: opacity .25s ease; }
+  .info-tempo .ic { width:32px; height:32px; flex-shrink:0; color:var(--teal-claro); }
   .info-tempo .ic svg { width:100%; height:100%; overflow:visible; }
   .info-tempo .txt-tempo { line-height:1.15; }
-  .info-tempo .graus { font-size:1.2em; font-weight:700; }
-  .info-tempo .cidade { font-size:.68em; color:rgba(255,255,255,.6); }
+  .info-tempo .graus { font-size:1.2em; font-weight:700; letter-spacing:-.01em; }
+  .info-tempo .cidade { font-size:.68em; color:rgba(255,255,255,.6); font-weight:300; letter-spacing:.01em; }
 
-  /* ── TICKER DE NOTÍCIAS: faixa única, contínua, sem rótulo ── */
+  /* ── LINHA VITAL: assinatura visual do painel (traço de monitor
+     cardíaco rolando discretamente logo acima do ticker). Remete
+     diretamente à área médica em vez de ser só decoração genérica. ── */
+  #linha-vital {
+    position:fixed; left:0; right:0; bottom:58px; height:13px; z-index:29;
+    opacity:.6; pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='16'><path d='M0 8 H74 L82 8 L88 1.5 L95 14.5 L101 5 L107 8 H240' fill='none' stroke='%2310B3A0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:repeat-x; background-size:220px 13px;
+    animation: rolar-vital 5s linear infinite;
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  @keyframes rolar-vital { from { background-position-x:0; } to { background-position-x:-220px; } }
+
+  /* ── TICKER DE NOTÍCIAS: faixa única, contínua, estilo editorial ── */
   #barra-ticker {
     position:fixed; left:0; right:0; bottom:0; z-index:30;
-    height:90px; display:flex; align-items:center;
-    background: var(--vidro-forte); backdrop-filter: blur(14px);
+    height:58px; display:flex; align-items:center;
+    background: var(--vidro-forte); backdrop-filter: blur(18px) saturate(1.3);
     border-top:1px solid var(--borda-vidro);
+    box-shadow: var(--brilho-vidro);
   }
   @keyframes pulso { 0%,100%{opacity:1} 50%{opacity:.25} }
   #ticker-viewport { flex:1 1 auto; height:100%; overflow:hidden; position:relative; }
@@ -182,17 +210,20 @@
     animation: rolar linear infinite;
   }
   #ticker-trilho .item {
-    display:inline-flex; align-items:center; gap:16px;
-    padding:0 3em; flex-shrink:0;
+    display:inline-flex; align-items:center; gap:10px;
+    padding:0 2.4em; flex-shrink:0;
   }
-  #ticker-trilho .item img {
-    width:120px; height:80px; border-radius:9px; object-fit:cover; flex-shrink:0;
-    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  #ticker-trilho .item .ponto-fonte {
+    width:5px; height:5px; border-radius:50%; background:var(--amber); flex-shrink:0;
+  }
+  #ticker-trilho .item .fonte {
+    font-size:.65em; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--amber); flex-shrink:0;
   }
   #ticker-trilho .item b {
-    color:#fff; font-size:1.02em; font-weight:500; opacity:.94; white-space:nowrap;
+    color:#fff; font-size:.92em; font-weight:400; opacity:.92; white-space:nowrap; letter-spacing:.01em;
   }
-  #ticker-trilho .sep { color:var(--amber); font-size:1.1em; flex-shrink:0; }
+  #ticker-trilho .sep { color:rgba(255,255,255,.25); font-size:1em; flex-shrink:0; }
   @keyframes rolar { from { transform:translateX(0); } to { transform:translateX(-50%); } }
 
   .estado-vazio { color:rgba(255,255,255,.55); font-size:1.1em; }
@@ -227,7 +258,7 @@
      ponteiro grosso (toque) sem hover — TVs e PCs não caem aqui. */
   @media (max-width:900px), (pointer:coarse) and (max-width:1180px) {
     #bloqueio-tela-pequena { display:flex; }
-    #palco, #selo-marca, #selo-info, #barra-ticker { display:none !important; }
+    #palco, #selo-marca, #selo-info, #barra-ticker, #linha-vital { display:none !important; }
   }
 </style>
 </head>
@@ -269,6 +300,10 @@
     </div>
   </div>
 
+  <!-- Linha vital: assinatura visual do painel, um traço de monitor
+       cardíaco rolando discretamente acima do ticker -->
+  <div id="linha-vital"></div>
+
   <!-- Ticker de notícias: faixa única, contínua, no rodapé -->
   <div id="barra-ticker">
     <div id="ticker-viewport">
@@ -292,7 +327,12 @@ const CIDADES = [
 
 const FONTES_NOTICIAS = [
   'https://www.acordacidade.com.br/feed/',
-  'https://news.google.com/rss/search?q=Feira%20de%20Santana&hl=pt-BR&gl=BR&ceid=BR:pt-419',
+  // Feed "geo" do Google News: cobertura curada da região (Bahia), não
+  // uma busca por palavra-chave. Isso evita puxar qualquer matéria que
+  // apenas cite "Feira de Santana" de passagem, mesmo sendo irrelevante —
+  // aqui vêm as notícias que o Google já classifica como relevantes pra
+  // essa região.
+  'https://news.google.com/rss/headlines/section/geo/Bahia?hl=pt-BR&gl=BR&ceid=BR:pt-419',
 ];
 const QTD_NOTICIAS_TICKER = 12;
 
@@ -452,22 +492,32 @@ const DESC_TEMPO_FAMILIA = codigo => {
   return 'chuva';
 };
 
+// Ícones em traço (stroke), na mesma linguagem visual do ícone do
+// comunicado — mesmo peso de linha, mesmas pontas arredondadas —
+// pra formar um conjunto coeso em vez de emojis-de-tempo genéricos.
+const TRACO = 'fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"';
 function iconeTempoMiniSVG(codigo, dia) {
   const fam = DESC_TEMPO_FAMILIA(codigo);
   if (fam === 'sol') {
-    if (dia) return `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="24" fill="#F0B93E"/></svg>`;
-    return `<svg viewBox="0 0 100 100"><path d="M62 28a24 24 0 1 0 20 30 19 19 0 0 1-20-30z" fill="#B7A8E0"/></svg>`;
+    if (dia) return `<svg viewBox="0 0 100 100" ${TRACO}>
+      <circle cx="50" cy="52" r="18"/>
+      <path d="M50 14v10M50 90v10M12 52h10M78 52h10M22 24l7 7M71 71l7 7M78 24l-7 7M29 71l-7 7"/></svg>`;
+    return `<svg viewBox="0 0 100 100" ${TRACO}>
+      <path d="M64 26a26 26 0 1 0 18 34 21 21 0 0 1-18-34z"/></svg>`;
   }
-  if (fam === 'nublado') return `<svg viewBox="0 0 100 100">
-    <ellipse cx="42" cy="58" rx="20" ry="14" fill="#D4DEE3"/><ellipse cx="58" cy="52" rx="24" ry="17" fill="#D4DEE3"/><ellipse cx="76" cy="60" rx="18" ry="13" fill="#D4DEE3"/></svg>`;
-  if (fam === 'neblina') return `<svg viewBox="0 0 100 100">
-    <ellipse cx="50" cy="50" rx="30" ry="18" fill="#C9D4D9" opacity=".8"/></svg>`;
-  if (fam === 'neve') return `<svg viewBox="0 0 100 100">
-    <ellipse cx="50" cy="50" rx="26" ry="16" fill="#D4DEE3"/><circle cx="40" cy="78" r="3" fill="#AFC4D2"/><circle cx="60" cy="78" r="3" fill="#AFC4D2"/></svg>`;
-  if (fam === 'tempestade') return `<svg viewBox="0 0 100 100">
-    <ellipse cx="50" cy="46" rx="26" ry="16" fill="#9FB1BC"/><polygon points="54,58 42,80 50,80 46,96 66,72 56,72" fill="#F0B93E"/></svg>`;
-  return `<svg viewBox="0 0 100 100">
-    <ellipse cx="50" cy="46" rx="26" ry="16" fill="#D4DEE3"/><rect x="38" y="70" width="4" height="12" rx="2" fill="#5AA6E0"/><rect x="58" y="70" width="4" height="12" rx="2" fill="#5AA6E0"/></svg>`;
+  if (fam === 'nublado') return `<svg viewBox="0 0 100 100" ${TRACO}>
+    <path d="M28 70a16 16 0 0 1 3-32 22 22 0 0 1 42-6 18 18 0 0 1-3 38H28z"/></svg>`;
+  if (fam === 'neblina') return `<svg viewBox="0 0 100 100" ${TRACO}>
+    <path d="M20 40h60M14 56h72M20 72h60"/></svg>`;
+  if (fam === 'neve') return `<svg viewBox="0 0 100 100" ${TRACO}>
+    <path d="M28 54a16 16 0 0 1 3-32 22 22 0 0 1 42-6 18 18 0 0 1-3 38H28z"/>
+    <path d="M36 78v14M50 78v14M64 78v14"/></svg>`;
+  if (fam === 'tempestade') return `<svg viewBox="0 0 100 100" ${TRACO}>
+    <path d="M26 50a16 16 0 0 1 3-32 22 22 0 0 1 42-6 18 18 0 0 1-3 36"/>
+    <path d="M54 58 40 82h14l-8 16 22-24H54z"/></svg>`;
+  return `<svg viewBox="0 0 100 100" ${TRACO}>
+    <path d="M28 54a16 16 0 0 1 3-32 22 22 0 0 1 42-6 18 18 0 0 1-3 38H28z"/>
+    <path d="M36 78v10M50 78v10M64 78v10"/></svg>`;
 }
 
 let dadosTempoCidades = []; // cache: tempo atual de cada cidade da lista CIDADES
@@ -515,55 +565,74 @@ const PROXIES_NOTICIAS = [
   url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
 ];
 
-function extrairImagemItem(item) {
-  const enclosure = item.querySelector('enclosure[url]');
-  if (enclosure) return enclosure.getAttribute('url');
-  const media = item.getElementsByTagName('media:content')[0] || item.getElementsByTagName('media:thumbnail')[0];
-  if (media) return media.getAttribute('url') || '';
-  return '';
-}
-
-async function buscarFeedComFallback() {
-  for (const feedUrl of FONTES_NOTICIAS) {
-    for (const montarUrl of PROXIES_NOTICIAS) {
-      try {
-        const r = await fetch(montarUrl(feedUrl));
-        if (!r.ok) continue;
-        const texto = await r.text();
-        const xml = new DOMParser().parseFromString(texto, 'text/xml');
-        if (xml.querySelector('parsererror')) continue;
-        const items = Array.from(xml.querySelectorAll('item'));
-        if (items.length) return items;
-      } catch (e) { /* tenta a próxima combinação */ }
-    }
+async function buscarFeedUnico(feedUrl) {
+  for (const montarUrl of PROXIES_NOTICIAS) {
+    try {
+      const r = await fetch(montarUrl(feedUrl));
+      if (!r.ok) continue;
+      const texto = await r.text();
+      const xml = new DOMParser().parseFromString(texto, 'text/xml');
+      if (xml.querySelector('parsererror')) continue;
+      const items = Array.from(xml.querySelectorAll('item'));
+      if (items.length) return items;
+    } catch (e) { /* tenta a próxima combinação de proxy */ }
   }
   return [];
 }
 
-function montarItemTicker(titulo, imagem) {
-  const img = imagem
-    ? `<img src="${imagem}" alt="" onerror="this.remove()">`
-    : '';
-  return `<span class="item">${img}<b>${titulo}</b></span><span class="sep">•</span>`;
+// Nome de exibição por domínio, usado quando o feed não traz o nome
+// do veículo em nenhum outro lugar (ex.: o feed local do Acorda Cidade).
+const NOME_FONTE_PADRAO = { 'acordacidade.com.br': 'Acorda Cidade' };
+function nomeFontePadrao(feedUrl) {
+  try { return NOME_FONTE_PADRAO[new URL(feedUrl).hostname.replace(/^www\./, '')] || 'Notícias'; }
+  catch (e) { return 'Notícias'; }
+}
+
+async function buscarTodosFeeds() {
+  // Busca todas as fontes em paralelo e depois intercala os itens
+  // (uma notícia local, uma regional, uma local...) em vez de só usar
+  // uma fonte como reserva da outra — assim o ticker mistura o
+  // hiperlocal do Acorda Cidade com a cobertura regional do Google News.
+  const porFeed = await Promise.all(FONTES_NOTICIAS.map(async feedUrl => {
+    const items = await buscarFeedUnico(feedUrl);
+    const padrao = nomeFontePadrao(feedUrl);
+    return items.map(item => {
+      let t = item.querySelector('title')?.textContent || '';
+      // O Google News inclui o nome do veículo numa tag <source> própria —
+      // muito mais confiável do que tentar adivinhar pelo sufixo do título.
+      const tagFonte = item.querySelector('source')?.textContent;
+      let fonte = tagFonte || padrao;
+      if (!tagFonte) {
+        const m = t.match(/\s-\s([^-]+)$/);
+        if (m) { fonte = m[1].trim(); t = t.replace(/\s-\s[^-]+$/, ''); }
+      }
+      return { titulo: t, fonte };
+    });
+  }));
+
+  const maxLen = Math.max(0, ...porFeed.map(lista => lista.length));
+  const intercalado = [];
+  for (let i = 0; i < maxLen; i++) {
+    for (const lista of porFeed) if (lista[i]) intercalado.push(lista[i]);
+  }
+  return intercalado.slice(0, QTD_NOTICIAS_TICKER);
+}
+
+function montarItemTicker(titulo, fonte) {
+  return `<span class="item"><span class="ponto-fonte"></span><span class="fonte">${fonte}</span><b>${titulo}</b></span><span class="sep">•</span>`;
 }
 
 async function atualizarTicker() {
   const trilho = document.getElementById('ticker-trilho');
   try {
-    const items = (await buscarFeedComFallback()).slice(0, QTD_NOTICIAS_TICKER);
-    if (!items.length) throw new Error('vazio');
-
-    const noticias = items.map(it => {
-      let t = it.querySelector('title')?.textContent || '';
-      t = t.replace(/\s-\s[^-]+$/, '');
-      return { titulo: t, imagem: extrairImagemItem(it) };
-    });
+    const noticias = await buscarTodosFeeds();
+    if (!noticias.length) throw new Error('vazio');
 
     // duplica a lista pra permitir loop contínuo e sem costura no CSS —
-    // cada notícia entra como um único bloco (miniatura + título) que
+    // cada notícia entra como um único bloco (selo de fonte + título) que
     // desliza pra fora enquanto a próxima já vem entrando ao lado.
     const conteudo = noticias.concat(noticias)
-      .map(n => montarItemTicker(n.titulo, n.imagem))
+      .map(n => montarItemTicker(n.titulo, n.fonte))
       .join('');
     trilho.innerHTML = conteudo;
 
