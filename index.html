@@ -260,6 +260,44 @@
     #bloqueio-tela-pequena { display:flex; }
     #palco, #selo-marca, #selo-info, #barra-ticker, #linha-vital { display:none !important; }
   }
+
+  /* ── TELA DE INÍCIO: nada roda até o usuário clicar em "Iniciar".
+     Isso também garante que o navegador libere autoplay de vídeo COM
+     SOM, já que essa liberação exige uma interação real do usuário. ── */
+  #tela-inicio {
+    position:fixed; inset:0; z-index:9998;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:34px; text-align:center; padding:40px;
+    background:
+      radial-gradient(circle at 22% 24%, rgba(16,179,160,.28), transparent 55%),
+      radial-gradient(circle at 80% 78%, rgba(232,172,59,.22), transparent 55%),
+      linear-gradient(160deg, #0A1210 0%, #0D1917 55%, #090F0E 100%);
+    transition: opacity .6s ease, visibility .6s ease;
+  }
+  #tela-inicio.escondida { opacity:0; visibility:hidden; pointer-events:none; }
+  #tela-inicio .logo-inicio { height:64px; filter: drop-shadow(0 2px 14px rgba(0,0,0,.5)); }
+  #tela-inicio .logo-inicio.erro { display:none; }
+  #tela-inicio .marca-inicio {
+    display:none; font-family:'Cormorant Garamond', serif; font-size:2.6em;
+    color:#fff; font-weight:600;
+  }
+  #tela-inicio .logo-inicio.erro + .marca-inicio { display:block; }
+  #tela-inicio .marca-inicio em { font-style:italic; color:var(--teal); }
+  #tela-inicio .tagline-inicio { font-size:1.05em; color:rgba(255,255,255,.55); letter-spacing:.04em; margin-top:-10px; }
+  #btn-iniciar {
+    display:flex; align-items:center; gap:14px;
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(18px) saturate(1.3);
+    border:1px solid var(--borda-vidro);
+    border-radius:100px; padding:20px 46px;
+    color:#fff; font-family:'Outfit', sans-serif; font-size:1.25em; font-weight:600;
+    letter-spacing:.02em; cursor:pointer;
+    box-shadow: 0 20px 44px -20px rgba(0,0,0,.6), var(--brilho-vidro);
+    transition: transform .2s ease, background .2s ease;
+  }
+  #btn-iniciar:hover { background: rgba(255,255,255,.11); transform:translateY(-2px); }
+  #btn-iniciar:active { transform:translateY(0); }
+  #btn-iniciar svg { width:26px; height:26px; color:var(--teal-claro); }
 </style>
 </head>
 <body>
@@ -276,6 +314,21 @@
     </div>
     <div class="titulo-bloqueio">Visualização não disponível neste dispositivo</div>
     <div class="desc-bloqueio">Este painel foi feito para TVs e computadores. Tente acessar por um dispositivo com tela maior.</div>
+  </div>
+
+  <!-- Tela de início: fica na frente de tudo até o usuário clicar em
+       "Iniciar". Nenhum conteúdo (ciclo de slides, tempo, ticker) começa
+       antes disso — é o gatilho de interação inicial com o usuário. -->
+  <div id="tela-inicio">
+    <img class="logo-inicio" src="logo-amar.png" onerror="this.classList.add('erro')">
+    <div class="marca-inicio">Centro <em>Médico</em> AMAR</div>
+    <div class="tagline-inicio">Painel de TV · Recepção</div>
+    <button id="btn-iniciar" type="button">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="34,22 82,50 34,78" fill="currentColor" stroke="none"/>
+      </svg>
+      Iniciar
+    </button>
   </div>
 
   <!-- PALCO: conteúdo cadastrado no banco de dados, sempre 100vw x 100vh -->
@@ -325,15 +378,13 @@ const CIDADES = [
   { nome:'Santo Antônio de Jesus',  lat:-12.9528, lon:-39.2808 },
 ];
 
-const FONTES_NOTICIAS = [
-  'https://www.acordacidade.com.br/feed/',
-  // Feed "geo" do Google News: cobertura curada da região (Bahia), não
-  // uma busca por palavra-chave. Isso evita puxar qualquer matéria que
-  // apenas cite "Feira de Santana" de passagem, mesmo sendo irrelevante —
-  // aqui vêm as notícias que o Google já classifica como relevantes pra
-  // essa região.
-  'https://news.google.com/rss/headlines/section/geo/Bahia?hl=pt-BR&gl=BR&ceid=BR:pt-419',
-];
+// A lista de feeds RSS (Acorda Cidade + Google News Bahia) e o parsing
+// deles agora vivem no Worker (rota /noticias), não mais aqui no cliente.
+// Motivo: proxies públicos de CORS (allorigins, corsproxy.io) são
+// instáveis em produção — o corsproxy.io, por exemplo, passou a exigir
+// chave de API fora de localhost — então buscar o RSS direto no Worker
+// (que não tem restrição de CORS) é muito mais confiável. Pra trocar/
+// adicionar fontes, edite a rota /noticias no Worker.
 const QTD_NOTICIAS_TICKER = 12;
 
 const DURACAO_PADRAO = {
@@ -560,62 +611,15 @@ function rotacionarCidade() {
 }
 
 // ── NOTÍCIAS (ticker contínuo e discreto) ──────────────────────────
-const PROXIES_NOTICIAS = [
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-];
-
-async function buscarFeedUnico(feedUrl) {
-  for (const montarUrl of PROXIES_NOTICIAS) {
-    try {
-      const r = await fetch(montarUrl(feedUrl));
-      if (!r.ok) continue;
-      const texto = await r.text();
-      const xml = new DOMParser().parseFromString(texto, 'text/xml');
-      if (xml.querySelector('parsererror')) continue;
-      const items = Array.from(xml.querySelectorAll('item'));
-      if (items.length) return items;
-    } catch (e) { /* tenta a próxima combinação de proxy */ }
-  }
-  return [];
-}
-
-// Nome de exibição por domínio, usado quando o feed não traz o nome
-// do veículo em nenhum outro lugar (ex.: o feed local do Acorda Cidade).
-const NOME_FONTE_PADRAO = { 'acordacidade.com.br': 'Acorda Cidade' };
-function nomeFontePadrao(feedUrl) {
-  try { return NOME_FONTE_PADRAO[new URL(feedUrl).hostname.replace(/^www\./, '')] || 'Notícias'; }
-  catch (e) { return 'Notícias'; }
-}
-
+// Busca já pronta (RSS buscado + parseado) direto no Worker, em vez de
+// depender de proxies públicos de CORS no navegador. O Worker devolve
+// os itens já intercalados entre as fontes (ver comentário acima em
+// QTD_NOTICIAS_TICKER).
 async function buscarTodosFeeds() {
-  // Busca todas as fontes em paralelo e depois intercala os itens
-  // (uma notícia local, uma regional, uma local...) em vez de só usar
-  // uma fonte como reserva da outra — assim o ticker mistura o
-  // hiperlocal do Acorda Cidade com a cobertura regional do Google News.
-  const porFeed = await Promise.all(FONTES_NOTICIAS.map(async feedUrl => {
-    const items = await buscarFeedUnico(feedUrl);
-    const padrao = nomeFontePadrao(feedUrl);
-    return items.map(item => {
-      let t = item.querySelector('title')?.textContent || '';
-      // O Google News inclui o nome do veículo numa tag <source> própria —
-      // muito mais confiável do que tentar adivinhar pelo sufixo do título.
-      const tagFonte = item.querySelector('source')?.textContent;
-      let fonte = tagFonte || padrao;
-      if (!tagFonte) {
-        const m = t.match(/\s-\s([^-]+)$/);
-        if (m) { fonte = m[1].trim(); t = t.replace(/\s-\s[^-]+$/, ''); }
-      }
-      return { titulo: t, fonte };
-    });
-  }));
-
-  const maxLen = Math.max(0, ...porFeed.map(lista => lista.length));
-  const intercalado = [];
-  for (let i = 0; i < maxLen; i++) {
-    for (const lista of porFeed) if (lista[i]) intercalado.push(lista[i]);
-  }
-  return intercalado.slice(0, QTD_NOTICIAS_TICKER);
+  const r = await fetch(`${API}/noticias`);
+  if (!r.ok) throw new Error('falha ao buscar /noticias no worker');
+  const noticias = await r.json();
+  return noticias.slice(0, QTD_NOTICIAS_TICKER);
 }
 
 function montarItemTicker(titulo, fonte) {
@@ -646,12 +650,27 @@ async function atualizarTicker() {
 }
 
 // ── START ─────────────────────────────────────────────────────────
-cicloConteudo();
-atualizarTempoCidades();
-setInterval(atualizarTempoCidades, INTERVALO_ATUALIZA_TEMPO);
-setInterval(rotacionarCidade, INTERVALO_ROTACAO_CIDADE);
-atualizarTicker();
-setInterval(atualizarTicker, INTERVALO_ATUALIZA_TICKER);
+// Nada disso roda sozinho: só começa depois que o usuário clica em
+// "Iniciar" na tela de início. Além de servir como a interação inicial
+// pedida, isso também é o que libera o navegador a tocar vídeo com som
+// (autoplay com áudio só é permitido após um gesto real do usuário).
+let painelIniciado = false;
+
+function iniciarPainel() {
+  if (painelIniciado) return;
+  painelIniciado = true;
+
+  document.getElementById('tela-inicio').classList.add('escondida');
+
+  cicloConteudo();
+  atualizarTempoCidades();
+  setInterval(atualizarTempoCidades, INTERVALO_ATUALIZA_TEMPO);
+  setInterval(rotacionarCidade, INTERVALO_ROTACAO_CIDADE);
+  atualizarTicker();
+  setInterval(atualizarTicker, INTERVALO_ATUALIZA_TICKER);
+}
+
+document.getElementById('btn-iniciar').addEventListener('click', iniciarPainel);
 </script>
 </body>
 </html>
