@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avalie-nos no Google | Centro Médico Amar</title>
+
+    <!-- Favicons: troque pelos ícones reais do cliente quando tiver -->
+    <link rel="icon" type="image/png" href="https://centromedicoamar.pages.dev/icones/favicon-96x96.png" sizes="96x96" />
+    <link rel="shortcut icon" href="https://centromedicoamar.pages.dev/icones/favicon.ico" />
+    <meta name="apple-mobile-web-app-title" content="Centro Médico Amar" />
+
+    <!-- ===================== GOOGLE ANALYTICS (GA4) ===================== -->
+    <!-- TROCAR "G-XXXXXXXXXX" pelo ID de GA4 real do cliente -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KRX3YRPLMB"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        var URL_DESTINO = "https://search.google.com/local/writereview?placeid=ChIJObeRzZY3FAcR8aF-Ons2no4";
+        var jaRedirecionou = false;
+
+        function irParaDestino() {
+            if (jaRedirecionou) return;
+            jaRedirecionou = true;
+            window.location.href = URL_DESTINO;
+        }
+
+        // Envia o pageview e só redireciona depois que o GA confirmar o envio
+        gtag('config', 'G-KRX3YRPLMB', {
+            'page_path': window.location.pathname,
+            'event_callback': irParaDestino
+        });
+
+        // Rede de segurança: se o GA não responder (adblock, rede lenta, etc.)
+        // redireciona mesmo assim após a animação
+        setTimeout(irParaDestino, 1800);
+    </script>
+
+    <!-- ===================== OPEN GRAPH / META (compartilhamento) ===================== -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://centromedicoamar.pages.dev/avaliacao" />
+    <meta property="og:title" content="Avalie-nos no Google | Centro Médico Amar" />
+    <meta property="og:description" content="Sua opinião é muito importante para nós." />
+    <meta property="og:image" content="https://centromedicoamar.pages.dev/avaliacao/bg.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --teal-dark:  #0B3A38;   /* fundo / gradiente escuro */
+            --teal:       #1B7F72;   /* cor principal / botões / header */
+            --teal-light: #2FA093;   /* detalhes e hover */
+            --coral:      #E85D6B;   /* acento da logo (coração) */
+            --bg:         #F4F7F6;
+            --white:      #FFFFFF;
+            --text:       #1E2D2C;
+            --muted:      #7C8C8A;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0B3A38, #1B7F72, #2FA093, #E85D6B);
+        }
+
+        .container {
+            max-width: 380px;
+            width: 100%;
+            padding: 40px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* LOGO EM ABERTO — troque o src abaixo pela logo real do cliente */
+        .logo-wrap {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 24px rgba(11,58,56,0.15);
+            padding: 12px;
+            margin-bottom: 18px;
+            animation: fadeDown 0.6s ease both;
+        }
+        .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+
+        .clinic-name {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--teal);
+            margin-bottom: 20px;
+            animation: fadeDown 0.6s ease 0.1s both;
+        }
+
+        .google-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 50% 0 50% 50%;
+            background: #EAF6F4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+            animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1) 0.2s both;
+        }
+
+        .titulo {
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            animation: fadeUp 0.5s ease 0.3s both;
+        }
+
+        .subtitulo {
+            font-size: 0.88rem;
+            color: var(--muted);
+            font-weight: 600;
+            line-height: 1.5;
+            max-width: 280px;
+            margin-bottom: 26px;
+            animation: fadeUp 0.5s ease 0.4s both;
+        }
+
+        /* pontos — indicador de carregamento */
+        .grains {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        .grain {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1) both,
+                       pulse 1.2s ease-in-out infinite;
+        }
+        .grain:nth-child(1) { background: var(--teal-dark);  animation-delay: 0.5s, 0.5s; }
+        .grain:nth-child(2) { background: var(--teal);       animation-delay: 0.6s, 0.65s; }
+        .grain:nth-child(3) { background: var(--teal-light); animation-delay: 0.7s, 0.8s; }
+        .grain:nth-child(4) { background: var(--coral);      animation-delay: 0.8s, 0.95s; }
+        .grain:nth-child(5) { background: var(--teal);       animation-delay: 0.9s, 1.1s; }
+
+        .link-manual {
+            font-size: 0.82rem;
+            color: var(--muted);
+            font-weight: 600;
+            animation: fadeUp 0.5s ease 1.1s both;
+        }
+        .link-manual a {
+            color: var(--teal);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .link-manual a:hover { text-decoration: underline; }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.4); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(0.75); opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar"></div>
+
+    <div class="container">
+
+        <!-- LOGO EM ABERTO: troque o src pela logo real (ex: logo.png do cliente) -->
+        <div class="logo-wrap">
+            <img src="https://centromedicoamar.pages.dev/avaliacao/logo.png" alt="Centro Médico Amar" />
+        </div>
+        <div class="clinic-name">Centro Médico Amar</div>
+
+        <div class="google-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+        </div>
+
+        <p class="titulo">Obrigado por escolher o Amar!</p>
+        <p class="subtitulo">Você está sendo redirecionado para deixar sua avaliação no Google.</p>
+
+        <div class="grains">
+            <div class="grain"></div>
+            <div class="grain"></div>
+            <div class="grain"></div>
+            <div class="grain"></div>
+            <div class="grain"></div>
+        </div>
+
+        <p class="link-manual">
+            Não foi redirecionado?
+            <a href="https://search.google.com/local/writereview?placeid=ChIJObeRzZY3FAcR8aF-Ons2no4">Clique aqui</a>
+        </p>
+
+    </div>
+
+</body>
+</html>
